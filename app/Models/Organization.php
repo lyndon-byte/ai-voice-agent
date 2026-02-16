@@ -1,0 +1,16 @@
+<?php
+
+namespace App\Models;
+
+use Spatie\Multitenancy\Models\Tenant;
+
+class Organization extends Tenant
+{
+    protected $table = 'tenants';
+    protected $fillable = ['name','domain','database'];
+
+    public function agents(){
+
+        return $this->hasMany(Agents::class);
+    }
+}
