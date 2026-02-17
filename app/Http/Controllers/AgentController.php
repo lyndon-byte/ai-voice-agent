@@ -70,6 +70,9 @@ class AgentController extends Controller
 
         ]);
 
+        return redirect()->route('agent.view', ['agentId' => $agent->agent_id ]);
+
+
     }
 
     public function viewAgent(Request $request){

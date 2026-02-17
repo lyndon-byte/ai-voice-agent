@@ -11,12 +11,12 @@ export default function Agents({ agents }) {
   
 
     const filteredAgents = agents.filter((agent) =>
-        agent.name.toLowerCase().includes(searchQuery.toLowerCase())
+        agent.agent_name.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     const handleRowClick = (agentId) => {
 
-        router.get(`/agents/agent?agentId=${agentId}`);
+        router.get(`/app/agents/agent?agentId=${agentId}`);
         
     };
 
@@ -57,6 +57,17 @@ export default function Agents({ agents }) {
             }
             setOpenDropdown(agentId);
         }
+    };
+
+    const formatDate = (isoString) => {
+
+        const date = new Date(isoString);
+        
+        return new Intl.DateTimeFormat('en-US', {
+          dateStyle: 'medium',
+          timeStyle: 'short', 
+        }).format(date);
+
     };
 
     return (
@@ -151,13 +162,13 @@ export default function Agents({ agents }) {
                                             className="cursor-pointer transition-colors hover:bg-gray-50"
                                         >
                                             <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900">
-                                                {agent.name}
+                                                {agent.agent_name}
                                             </td>
                                             <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
                                                 {agent.created_by}
                                             </td>
                                             <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-                                                {agent.created_at}
+                                                {formatDate(agent.created_at)}
                                             </td>
                                             <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
                                                 <button

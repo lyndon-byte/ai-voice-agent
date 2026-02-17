@@ -40,15 +40,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         try {
 
-            $response = $client->request('GET', "https://api.elevenlabs.io/v1/convai/agents/{$agentId}",[
+    
+            $client = new \GuzzleHttp\Client();
+
+            $response = $client->request('GET', 'https://api.elevenlabs.io/v1/voices/voice_id/samples/sample_id/audio',[
+
                 'headers' => [
                     'xi-api-key' => env('ELEVEN_LABS_KEY'),
                     'Content-Type' => 'application/json',
                 ],
             ]);
-            
-            $body = $response->getBody()->getContents();
-            $data = json_decode($body, true);
+
+            echo $response->getBody();
 
             return $data;
             
