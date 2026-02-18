@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AgentController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\VoiceController;
 use GuzzleHttp\Exception\ClientException;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
@@ -32,18 +33,34 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/app/agents/create', [AgentController::class, 'create'])->name('agents.create');
     Route::post('/app/agents/create', [AgentController::class, 'store'])->name('agents.create.store');
 
+    Route::get('/app/voices', [VoiceController::class, 'getVoices'])->name('voices');
+    
+
     Route::get('/test', function (){
-
-        $agentId = 'agent_1401khhdv21tf5dr349d9x01e4nc';
-
-        $client = new \GuzzleHttp\Client();
 
         try {
 
     
+            // $client = new \GuzzleHttp\Client();
+
+            // $response = $client->request('GET', 'https://api.elevenlabs.io/v1/convai/agents/agent_0001khkj48t8f818stz6zrw03s81',[
+
+            //     'headers' => [
+            //         'xi-api-key' => env('ELEVEN_LABS_KEY'),
+            //         'Content-Type' => 'application/json',
+            //     ],
+            // ]);
+
+            // $body = $response->getBody()->getContents();
+            // $data = json_decode($body, true);
+    
+            // return $data;
+
+          
+
             $client = new \GuzzleHttp\Client();
 
-            $response = $client->request('GET', 'https://api.elevenlabs.io/v1/voices/voice_id/samples/sample_id/audio',[
+            $response = $client->request('GET', 'https://api.elevenlabs.io/v2/voices?page_size=100&search=female',[
 
                 'headers' => [
                     'xi-api-key' => env('ELEVEN_LABS_KEY'),
@@ -51,10 +68,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 ],
             ]);
 
-            echo $response->getBody();
+            $body = $response->getBody()->getContents();
+            $data = json_decode($body, true);
 
             return $data;
-            
+                        
         } catch (ClientException $e){
 
           if ($e->getResponse() && $e->getResponse()->getStatusCode() === 404) {

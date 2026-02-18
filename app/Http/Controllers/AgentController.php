@@ -93,9 +93,21 @@ class AgentController extends Controller
             $body = $response->getBody()->getContents();
             $agent = json_decode($body, true);
 
+
+            $response = $client->request('GET', "https://api.elevenlabs.io/v1/voices/{$agent['conversation_config']['tts']['voice_id']}",[
+                'headers' => [
+                    'xi-api-key' => env('ELEVEN_LABS_KEY'),
+                    'Content-Type' => 'application/json',
+                ],
+            ]);
+
+            $body = $response->getBody()->getContents();
+            $voice = json_decode($body, true);
+
             return Inertia::render('Agent',[
 
-                'agent' => $agent
+                'agent' => $agent,
+                'currentVoice' => $voice
 
             ]);
 
