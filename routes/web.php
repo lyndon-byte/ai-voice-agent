@@ -32,6 +32,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/app/agents/agent', [AgentController::class, 'viewAgent'])->name('agent.view');
     Route::get('/app/agents/create', [AgentController::class, 'create'])->name('agents.create');
     Route::post('/app/agents/create', [AgentController::class, 'store'])->name('agents.create.store');
+    Route::patch('/app/agents/update', [AgentController::class, 'update'])->name('agents.update');
+
 
     Route::get('/app/voices', [VoiceController::class, 'getVoices'])->name('voices');
     
@@ -40,27 +42,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         try {
 
-    
-            // $client = new \GuzzleHttp\Client();
-
-            // $response = $client->request('GET', 'https://api.elevenlabs.io/v1/convai/agents/agent_0001khkj48t8f818stz6zrw03s81',[
-
-            //     'headers' => [
-            //         'xi-api-key' => env('ELEVEN_LABS_KEY'),
-            //         'Content-Type' => 'application/json',
-            //     ],
-            // ]);
-
-            // $body = $response->getBody()->getContents();
-            // $data = json_decode($body, true);
-    
-            // return $data;
-
-          
 
             $client = new \GuzzleHttp\Client();
 
-            $response = $client->request('GET', 'https://api.elevenlabs.io/v2/voices?page_size=100&search=female',[
+            $response = $client->request('GET', 'https://api.elevenlabs.io/v1/convai/agents/agent_0001khkj48t8f818stz6zrw03s81',[
 
                 'headers' => [
                     'xi-api-key' => env('ELEVEN_LABS_KEY'),
@@ -68,6 +53,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 ],
             ]);
 
+        
             $body = $response->getBody()->getContents();
             $data = json_decode($body, true);
 

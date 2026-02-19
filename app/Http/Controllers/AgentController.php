@@ -75,6 +75,35 @@ class AgentController extends Controller
 
     }
 
+    public function update(Request $request){
+
+        $validated = $request->validate([
+            'agent_id' => 'required|string',
+            'conversation_config' => 'sometimes|array',
+            'platform_settings' => 'sometimes|array',
+        ]);
+ 
+        $client = new Client();
+
+        $agentId = $validated['agent_id'];
+        unset($validated['agent_id']);
+
+        $response = $client->request('PATCH', "https://api.elevenlabs.io/v1/convai/agents/{$agentId}", [
+            'headers' => [
+                'xi-api-key' => env('ELEVEN_LABS_KEY'),
+                'Content-Type' => 'application/json',
+            ],
+            'json' => $validated
+        ]);
+
+        return response()->json([
+
+            'message' => 'agent was updated'
+
+        ]);
+
+    }
+
     public function viewAgent(Request $request){
 
         $agentId = $request->query('agentId');
