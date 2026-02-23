@@ -31,4 +31,8 @@ return [
         ],
     ],
 
+    'elevenlabs' => [
+        'api_key' => env('ELEVEN_LABS_KEY'),
+    ],
+
 ];

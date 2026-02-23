@@ -1,10 +1,12 @@
 <?php
 
 use App\Http\Controllers\AgentController;
+use App\Http\Controllers\KnowledgeBaseController; 
+use App\Http\Controllers\JobTrackerController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\VoiceController;
-use GuzzleHttp\Exception\ClientException;
 use Illuminate\Foundation\Application;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -22,7 +24,7 @@ Route::get('/app/dashboard', function () {
 })->middleware(['auth', 'verified','org','role:owner'])->name('dashboard');
 
 
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth','verified'])->group(function () {
 
     Route::get('/app/dashboard', function () {
         return Inertia::render('Dashboard');
@@ -36,39 +38,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 
     Route::get('/app/voices', [VoiceController::class, 'getVoices'])->name('voices');
-    
 
-    Route::get('/test', function (){
+    Route::post('/app/knowledge-base',[KnowledgeBaseController::class, 'store']); 
+    Route::post('/app/knowledge-base/detach',[KnowledgeBaseController::class, 'detach']);
+    Route::get('/app/knowledge-base/get-document',[KnowledgeBaseController::class, 'getDocument']);
+    Route::get('/app/knowledge-base/get-folder-documents',[KnowledgeBaseController::class, 'getFolderDocuments']);
 
-        try {
+    Route::post('/check-job',[JobTrackerController::class, 'checkJob']);
 
 
-            $client = new \GuzzleHttp\Client();
-
-            $response = $client->request('GET', 'https://api.elevenlabs.io/v1/convai/agents/agent_0001khkj48t8f818stz6zrw03s81',[
-
-                'headers' => [
-                    'xi-api-key' => env('ELEVEN_LABS_KEY'),
-                    'Content-Type' => 'application/json',
-                ],
-            ]);
-
-        
-            $body = $response->getBody()->getContents();
-            $data = json_decode($body, true);
-
-            return $data;
-                        
-        } catch (ClientException $e){
-
-          if ($e->getResponse() && $e->getResponse()->getStatusCode() === 404) {
-            abort(404);
-          }
-       }
-
-    });
 });
-
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

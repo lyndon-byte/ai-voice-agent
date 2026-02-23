@@ -14,7 +14,8 @@ import AdvancedTab from '@/Components/Tabs/AdvancedTab';
 import { AgentChangesProvider } from '@/Contexts/Agentchangescontext';
 import UnsavedChangesBar from '@/Components/Unsavedchangesbar';
 
-export default function Agent({ agent, currentVoice }) {
+export default function Agent({ agent,currentVoice,localKb }) {
+    
     const [activeTab, setActiveTab] = useState('configuration');
 
     const tabs = [
@@ -108,11 +109,19 @@ export default function Agent({ agent, currentVoice }) {
                     {/* Tab Content */}
                     <div className="space-y-4">
                         {activeTab === 'configuration' && (
-                            <ConfigurationTab agent={agent} config={config} currentVoice={currentVoice}/>
+                            <ConfigurationTab 
+                              agent={agent} 
+                              config={config} 
+                              currentVoice={currentVoice}
+                            />
                         )}
                         
                         {activeTab === 'knowledge' && (
-                            <KnowledgeTab config={config} />
+                            <KnowledgeTab 
+                              config={config} 
+                              agent={agent}
+                              localKb={localKb} 
+                            />
                         )}
                         
                         {activeTab === 'tools' && (

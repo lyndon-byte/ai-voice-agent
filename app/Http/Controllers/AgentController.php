@@ -106,7 +106,11 @@ class AgentController extends Controller
 
     public function viewAgent(Request $request){
 
+        $user = auth()->user();
+        $org = $user->organization;
         $agentId = $request->query('agentId');
+
+        $knowledgeBase = $org->knowledgeBase()->get();
 
         $client = new Client();
 
@@ -136,7 +140,8 @@ class AgentController extends Controller
             return Inertia::render('Agent',[
 
                 'agent' => $agent,
-                'currentVoice' => $voice
+                'currentVoice' => $voice,
+                'localKb' => $knowledgeBase
 
             ]);
 

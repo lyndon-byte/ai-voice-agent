@@ -13,4 +13,9 @@ class Organization extends Tenant
 
         return $this->hasMany(Agents::class);
     }
+
+    public function knowledgeBase(){
+
+        return $this->hasMany(KnowledgeBase::class);
+    }
 }

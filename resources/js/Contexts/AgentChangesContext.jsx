@@ -4,6 +4,7 @@ import axios from 'axios';
 const AgentChangesContext = createContext();
 
 export function AgentChangesProvider({ children, initialAgent }) {
+
     const [changes, setChanges] = useState({});
     const [hasChanges, setHasChanges] = useState(false);
     const [saving, setSaving] = useState(false);
@@ -11,8 +12,8 @@ export function AgentChangesProvider({ children, initialAgent }) {
     // Track a change
     const trackChange = useCallback((path, value) => {
         setChanges(prev => {
+
             const newChanges = { ...prev };
-            
             // Set nested value using path (e.g., "agent.prompt.prompt")
             const keys = path.split('.');
             let current = newChanges;
@@ -30,6 +31,111 @@ export function AgentChangesProvider({ children, initialAgent }) {
         setHasChanges(true);
     }, []);
 
+    // Add item to array
+    const addArrayItem = useCallback((path, item) => {
+        setChanges(prev => {
+            const newChanges = { ...prev };
+            const keys = path.split('.');
+            let current = newChanges;
+            
+            // Navigate to the array location
+            for (let i = 0; i < keys.length - 1; i++) {
+                if (!current[keys[i]]) {
+                    current[keys[i]] = {};
+                }
+                current = current[keys[i]];
+            }
+            
+            const arrayKey = keys[keys.length - 1];
+            
+            // Initialize array if it doesn't exist
+            if (!current[arrayKey] || !Array.isArray(current[arrayKey])) {
+                current[arrayKey] = [];
+            }
+            
+            // Add item to array
+            current[arrayKey] = [...current[arrayKey], item];
+            
+            return newChanges;
+        });
+        setHasChanges(true);
+    }, []);
+
+    // Remove item from array by index or by id
+    const removeArrayItem = useCallback((path, identifier) => {
+        setChanges(prev => {
+            const newChanges = { ...prev };
+            const keys = path.split('.');
+            let current = newChanges;
+            
+            // Navigate to the array location
+            for (let i = 0; i < keys.length - 1; i++) {
+                if (!current[keys[i]]) {
+                    return prev; // Array doesn't exist, nothing to remove
+                }
+                current = current[keys[i]];
+            }
+            
+            const arrayKey = keys[keys.length - 1];
+            
+            if (!current[arrayKey] || !Array.isArray(current[arrayKey])) {
+                return prev; // Not an array, nothing to remove
+            }
+            
+            // Remove by index if number, by id if object
+            if (typeof identifier === 'number') {
+                current[arrayKey] = current[arrayKey].filter((_, index) => index !== identifier);
+            } else {
+                current[arrayKey] = current[arrayKey].filter(item => item.id !== identifier);
+            }
+            
+            return newChanges;
+        });
+        setHasChanges(true);
+    }, []);
+
+    // Update item in array by index or id
+    const updateArrayItem = useCallback((path, identifier, updatedItem) => {
+        setChanges(prev => {
+            const newChanges = { ...prev };
+            const keys = path.split('.');
+            let current = newChanges;
+            
+            // Navigate to the array location
+            for (let i = 0; i < keys.length - 1; i++) {
+                if (!current[keys[i]]) {
+                    return prev;
+                }
+                current = current[keys[i]];
+            }
+            
+            const arrayKey = keys[keys.length - 1];
+            
+            if (!current[arrayKey] || !Array.isArray(current[arrayKey])) {
+                return prev;
+            }
+            
+            // Update by index if number, by id if string
+            if (typeof identifier === 'number') {
+                current[arrayKey] = current[arrayKey].map((item, index) => 
+                    index === identifier ? updatedItem : item
+                );
+            } else {
+                current[arrayKey] = current[arrayKey].map(item => 
+                    item.id === identifier ? updatedItem : item
+                );
+            }
+            
+            return newChanges;
+        });
+        setHasChanges(true);
+    }, []);
+
+    // Replace entire array
+    const replaceArray = useCallback((path, newArray) => {
+        trackChange(path, newArray);
+    }, [trackChange]);
+
     // Clear all changes
     const clearChanges = useCallback(() => {
         setChanges({});
@@ -40,6 +146,7 @@ export function AgentChangesProvider({ children, initialAgent }) {
     const mapToAPIFormat = useCallback(() => {
         // Only include what actually changed
         const payload = {};
+
         // Helper to check if object has any keys
         const hasKeys = (obj) => obj && Object.keys(obj).length > 0;
 
@@ -64,6 +171,10 @@ export function AgentChangesProvider({ children, initialAgent }) {
                     conversationConfig.agent.prompt.ignore_default_personality = 
                         !changes.agent.prompt.ignore_default_personality;
                 }
+
+                if ('knowledge_base' in changes.agent.prompt) {
+                    conversationConfig.agent.prompt.knowledge_base = changes.agent.prompt.knowledge_base;
+                }
             }
             
             // Add other agent fields if they changed
@@ -78,6 +189,8 @@ export function AgentChangesProvider({ children, initialAgent }) {
                 conversationConfig.agent.disable_first_message_interruptions = 
                     !changes.agent.disable_first_message_interruptions;
             }
+
+           
         }
 
         if (changes.turn && hasKeys(changes.turn)) {
@@ -124,12 +237,11 @@ export function AgentChangesProvider({ children, initialAgent }) {
     const saveChanges = useCallback(async (agentId) => {
         setSaving(true);
         try {
-
-            const payload = mapToAPIFormat();
-            payload.agent_id = agentId;
             
-            const response = await axios.patch(`/app/agents/update`,payload);
-
+            const payload = mapToAPIFormat();
+            payload.agent_id = agentId; // Add agent_id to payload
+            
+            const response = await axios.patch('/app/agents/update', payload);
             clearChanges();
             return { success: true, data: response.data };
 
@@ -149,6 +261,10 @@ export function AgentChangesProvider({ children, initialAgent }) {
         hasChanges,
         saving,
         trackChange,
+        addArrayItem,
+        removeArrayItem,
+        updateArrayItem,
+        replaceArray,
         clearChanges,
         saveChanges,
         mapToAPIFormat
