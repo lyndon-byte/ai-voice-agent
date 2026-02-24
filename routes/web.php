@@ -46,7 +46,20 @@ Route::middleware(['auth','verified'])->group(function () {
 
     Route::post('/check-job',[JobTrackerController::class, 'checkJob']);
 
+    Route::get('/test',function(){
 
+        $client = new \GuzzleHttp\Client();
+        $response = $client->request('GET', 'https://api.elevenlabs.io/v1/convai/agents/agent_0001khkj48t8f818stz6zrw03s81',[
+
+            'headers' => [
+
+                'xi-api-key' => env('ELEVEN_LABS_KEY'),
+                'Content-Type' => 'application/json'
+            ]
+
+        ]);
+        return json_decode($response->getBody()->getContents(),true);
+    });
 });
 
 Route::middleware('auth')->group(function () {

@@ -175,6 +175,10 @@ export function AgentChangesProvider({ children, initialAgent }) {
                 if ('knowledge_base' in changes.agent.prompt) {
                     conversationConfig.agent.prompt.knowledge_base = changes.agent.prompt.knowledge_base;
                 }
+
+                if ('built_in_tools' in changes.agent.prompt) {
+                    conversationConfig.agent.prompt.built_in_tools = changes.agent.prompt.built_in_tools;
+                }
             }
             
             // Add other agent fields if they changed
