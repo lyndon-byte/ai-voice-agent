@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Plus, Wrench, Settings, X, Trash2 } from 'lucide-react';
 import { useAgentChanges } from '@/Contexts/AgentChangesContext';
+import axios from 'axios';
 
 const SYSTEM_TOOLS = [
     { id: 'end_call',               label: 'End conversation' },
@@ -56,13 +57,23 @@ const TOOL_PARAMS_DEFAULTS = {
 // Recursively remove keys whose value is '', null, or undefined.
 // Preserves false, 0, and non-empty arrays/objects.
 const stripEmpty = (value) => {
-    if (Array.isArray(value)) return value.map(stripEmpty);
+    if (Array.isArray(value)) {
+        const cleaned = value.map(stripEmpty).filter(v =>
+            v !== null && v !== undefined && v !== '' &&
+            !(typeof v === 'object' && !Array.isArray(v) && Object.keys(v).length === 0)
+        );
+        return cleaned;
+    }
     if (value !== null && typeof value === 'object') {
-        return Object.fromEntries(
+        const cleaned = Object.fromEntries(
             Object.entries(value)
                 .filter(([, v]) => v !== '' && v !== null && v !== undefined)
                 .map(([k, v]) => [k, stripEmpty(v)])
+                .filter(([, v]) =>
+                    !(typeof v === 'object' && !Array.isArray(v) && Object.keys(v).length === 0)
+                )
         );
+        return cleaned;
     }
     return value;
 };
@@ -219,7 +230,57 @@ function VoicemailForm({ params, onChange }) {
     );
 }
 
-function TransferToAgentForm({ params, onChange }) {
+function AgentSelect({ value, onChange, currentAgentId }) {
+    const [agents, setAgents]   = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError]     = useState(null);
+
+    useEffect(() => {
+        setLoading(true);
+        axios.get('/get-all-agents')
+            .then(res => {
+                // Accept both { agents: [] } and a bare array
+                const list = Array.isArray(res.data) ? res.data : (res.data?.agents ?? []);
+                // Filter out the current agent so it can't transfer to itself
+                setAgents(list.filter(a => a.agent_id !== currentAgentId));
+            })
+            .catch(() => setError('Failed to load agents'))
+            .finally(() => setLoading(false));
+    }, [currentAgentId]);
+
+    if (loading) {
+        return (
+            <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">
+                <svg className="h-3.5 w-3.5 animate-spin text-gray-400" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                </svg>
+                <span className="text-sm text-gray-400">Loading agents…</span>
+            </div>
+        );
+    }
+
+    if (error) {
+        return <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-500">{error}</p>;
+    }
+
+    return (
+        <select
+            value={value ?? ''}
+            onChange={e => onChange(e.target.value)}
+            className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 focus:border-gray-400 focus:bg-white focus:outline-none focus:ring-1 focus:ring-gray-300"
+        >
+            <option value="" disabled>Select an agent…</option>
+            {agents.map(a => (
+                <option key={a.agent_id} value={a.agent_id}>
+                    {a.name ?? a.agent_id}
+                </option>
+            ))}
+        </select>
+    );
+}
+
+function TransferToAgentForm({ params, onChange, currentAgentId }) {
     const transfers = params.transfers ?? [];
 
     const updateTransfer = (i, patch) =>
@@ -238,8 +299,12 @@ function TransferToAgentForm({ params, onChange }) {
                     </button>
                     <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Transfer #{i + 1}</p>
                     <div className="space-y-3">
-                        <Field label="Agent ID" required>
-                            <Input value={tr.agent_id ?? ''} onChange={v => updateTransfer(i, { agent_id: v })} placeholder="agent_xxxx" />
+                        <Field label="Agent" required>
+                            <AgentSelect
+                                value={tr.agent_id ?? ''}
+                                onChange={v => updateTransfer(i, { agent_id: v })}
+                                currentAgentId={currentAgentId}
+                            />
                         </Field>
                         <Field label="Condition" required>
                             <Input value={tr.condition ?? ''} onChange={v => updateTransfer(i, { condition: v })} placeholder="e.g. if user asks for support" />
@@ -332,17 +397,17 @@ function TransferToNumberForm({ params, onChange }) {
     );
 }
 
-function ToolParamsForm({ toolId, params, onChange }) {
+function ToolParamsForm({ toolId, params, onChange, currentAgentId }) {
     if (toolId === 'play_keypad_touch_tone') return <PlayKeypadForm params={params} onChange={onChange} />;
     if (toolId === 'voicemail_detection')    return <VoicemailForm  params={params} onChange={onChange} />;
-    if (toolId === 'transfer_to_agent')      return <TransferToAgentForm  params={params} onChange={onChange} />;
+    if (toolId === 'transfer_to_agent')      return <TransferToAgentForm  params={params} onChange={onChange} currentAgentId={currentAgentId} />;
     if (toolId === 'transfer_to_number')     return <TransferToNumberForm params={params} onChange={onChange} />;
     return <p className="text-xs italic text-gray-400">No additional configuration for this tool.</p>;
 }
 
 // ── Settings Drawer ───────────────────────────────────────────────────────────
 
-function SettingsDrawer({ tool, toolConfig, onClose, onSave, onCancel }) {
+function SettingsDrawer({ tool, toolConfig, onClose, onSave, onCancel, currentAgentId }) {
     const [config, setConfig] = useState(() => ({ ...DEFAULT_TOOL_CONFIG, ...toolConfig }));
     const [params, setParams] = useState(() => ({
         ...(TOOL_PARAMS_DEFAULTS[tool.id] || {}),
@@ -393,7 +458,7 @@ function SettingsDrawer({ tool, toolConfig, onClose, onSave, onCancel }) {
                             <div className="border-t border-gray-100" />
                             <section>
                                 <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-400">Tool Parameters</p>
-                                <ToolParamsForm toolId={tool.id} params={params} onChange={setParams} />
+                                <ToolParamsForm toolId={tool.id} params={params} onChange={setParams} currentAgentId={currentAgentId} />
                             </section>
                         </>
                     )}
@@ -429,7 +494,561 @@ function SettingsDrawer({ tool, toolConfig, onClose, onSave, onCancel }) {
     );
 }
 
-// ── Main component ────────────────────────────────────────────────────────────
+// ── Add Tool Drawer (Webhook) ─────────────────────────────────────────────────
+
+const HTTP_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
+const BODY_METHODS  = new Set(['POST', 'PUT', 'PATCH']);
+
+const BLANK_PARAM = () => ({
+    _key:          crypto.randomUUID(),
+    identifier:    '',
+    type:          'string',
+    required:      false,
+    value_type:    'llm_prompt',
+    description:   '',
+    enum_values:   [],
+    enum_input:    '',
+});
+
+const BLANK_HEADER = () => ({
+    _key:       crypto.randomUUID(),
+    header_type: 'secret',   // 'secret' | 'value'
+    name:        '',
+    secret_id:   '',
+    value:       '',
+});
+
+const BLANK_TOOL = () => ({
+    name:                   '',
+    description:            '',
+    response_timeout_secs:  20,
+    disable_interruptions:  false,
+    force_pre_tool_speech:  false,
+    tool_call_sound:        null,
+    tool_call_sound_behavior: 'auto',
+    tool_error_handling_mode: 'auto',
+    execution_mode:         'immediate',
+    api_schema: {
+        method:       'POST',
+        url:          '',
+        content_type: 'application/json',
+        auth_connection: null,
+        request_headers:      [],   // array of BLANK_HEADER()
+        query_params_schema:  [],   // array of BLANK_PARAM()
+        request_body_schema:  {
+            description: '',
+            properties:  [],        // array of BLANK_PARAM()
+        },
+    },
+});
+
+// Convert internal array form → api_schema shape for saving
+function serializeTool(tool) {
+    const { api_schema, ...rest } = tool;
+
+    // headers → object map
+    const request_headers = {};
+    (api_schema.request_headers ?? []).forEach(h => {
+        if (!h.name.trim()) return;
+        request_headers[h.name] = h.header_type === 'secret'
+            ? { secret_id: h.secret_id }
+            : { value: h.value };
+    });
+
+    // query params → schema
+    const query_params_schema = (api_schema.query_params_schema ?? []).length
+        ? buildParamsSchema(api_schema.query_params_schema)
+        : null;
+
+    // body schema
+    const body_props = (api_schema.request_body_schema?.properties ?? []).filter(p => p.identifier.trim());
+    let request_body_schema = null;
+    if (BODY_METHODS.has(api_schema.method)) {
+        const properties = {};
+        body_props.forEach(p => {
+            const prop = { type: p.type, is_system_provided: false };
+            if (p.description) prop.description = p.description;
+            if (p.enum_values?.length) prop.enum = p.enum_values;
+            properties[p.identifier] = prop;
+        });
+        const desc = api_schema.request_body_schema?.description;
+        request_body_schema = {
+            type: 'object',
+            ...(desc ? { description: desc } : {}),
+            required: body_props.filter(p => p.required).map(p => p.identifier),
+            properties,
+        };
+    }
+
+    // For body methods, always send a valid request_body_schema even if empty
+    const final_body_schema = BODY_METHODS.has(api_schema.method)
+        ? (request_body_schema ?? { type: 'object', description: '', required: [], properties: {} })
+        : null;
+
+    const schema = {
+        url:          api_schema.url,
+        method:       api_schema.method,
+        content_type: api_schema.content_type,
+        ...(Object.keys(request_headers).length ? { request_headers } : {}),
+        ...(query_params_schema ? { query_params_schema } : {}),
+        ...(final_body_schema   ? { request_body_schema: final_body_schema } : {}),
+    };
+
+    // Build top-level object without empty string fields, then strip deeply
+    const top = {};
+    if (rest.name)        top.name        = rest.name;
+    if (rest.description) top.description = rest.description;
+    top.response_timeout_secs    = rest.response_timeout_secs;
+    top.disable_interruptions    = rest.disable_interruptions;
+    top.force_pre_tool_speech    = rest.force_pre_tool_speech;
+    top.tool_call_sound_behavior = rest.tool_call_sound_behavior;
+    top.tool_error_handling_mode = rest.tool_error_handling_mode;
+    top.execution_mode           = rest.execution_mode;
+    if (rest.tool_call_sound) top.tool_call_sound = rest.tool_call_sound;
+
+    return { type: 'webhook', ...top, api_schema: schema };
+}
+
+function buildParamsSchema(params) {
+    const valid = params.filter(p => p.identifier.trim());
+    const schema = {
+        type: 'object',
+        required: valid.filter(p => p.required).map(p => p.identifier),
+        properties: {},
+    };
+    valid.forEach(p => {
+        const prop = { type: p.type, is_system_provided: false };
+        if (p.description) prop.description = p.description;
+        if (p.enum_values?.length) prop.enum = p.enum_values;
+        schema.properties[p.identifier] = prop;
+    });
+    return schema;
+}
+
+// ── Sub-sections inside the drawer ───────────────────────────────────────────
+
+function ParamRow({ param, onChange, onDelete }) {
+    const addEnum = () => {
+        if (!param.enum_input.trim()) return;
+        onChange({ ...param, enum_values: [...param.enum_values, param.enum_input.trim()], enum_input: '' });
+    };
+    const removeEnum = (i) => onChange({ ...param, enum_values: param.enum_values.filter((_, idx) => idx !== i) });
+
+    return (
+        <div className="rounded-xl border border-gray-200 bg-white p-4 space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+                <Field label="Data type">
+                    <Select
+                        value={param.type}
+                        onChange={v => onChange({ ...param, type: v })}
+                        options={[
+                            { value: 'string',  label: 'String' },
+                            { value: 'number',  label: 'Number' },
+                            { value: 'boolean', label: 'Boolean' },
+                            { value: 'array',   label: 'Array' },
+                        ]}
+                    />
+                </Field>
+                <Field label="Identifier">
+                    <Input value={param.identifier} onChange={v => onChange({ ...param, identifier: v })} placeholder="param_name" />
+                </Field>
+            </div>
+
+            <label className="flex cursor-pointer items-center gap-2">
+                <input
+                    type="checkbox"
+                    checked={param.required}
+                    onChange={e => onChange({ ...param, required: e.target.checked })}
+                    className="h-4 w-4 rounded border-gray-300 accent-gray-900"
+                />
+                <span className="text-sm text-gray-700">Required</span>
+            </label>
+
+            <Field label="Value Type">
+                <Select
+                    value={param.value_type}
+                    onChange={v => onChange({ ...param, value_type: v })}
+                    options={[
+                        { value: 'llm_prompt',      label: 'LLM Prompt' },
+                        { value: 'dynamic_variable', label: 'Dynamic variable' },
+                        { value: 'constant',         label: 'Constant' },
+                    ]}
+                />
+            </Field>
+
+            <Field label="Description">
+                <textarea
+                    value={param.description}
+                    onChange={e => onChange({ ...param, description: e.target.value })}
+                    rows={2}
+                    placeholder="Describe this parameter for the LLM…"
+                    className="w-full resize-none rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-900 placeholder:text-gray-400 focus:border-gray-400 focus:bg-white focus:outline-none focus:ring-1 focus:ring-gray-300"
+                />
+                <p className="mt-1 text-xs text-gray-400">This field will be passed to the LLM and should describe in detail how to extract the data from the transcript.</p>
+            </Field>
+
+            <Field label="Enum Values (optional)">
+                <div className="flex gap-2">
+                    <input
+                        type="text"
+                        value={param.enum_input}
+                        onChange={e => onChange({ ...param, enum_input: e.target.value })}
+                        onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addEnum())}
+                        placeholder="Enter an enum value"
+                        className="flex-1 rounded-lg border border-gray-200 bg-gray-50 px-3 py-1.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-400 focus:bg-white focus:outline-none focus:ring-1 focus:ring-gray-300"
+                    />
+                    <button
+                        onClick={addEnum}
+                        className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
+                    >
+                        <Plus className="h-3.5 w-3.5" />
+                    </button>
+                </div>
+                {param.enum_values.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                        {param.enum_values.map((v, i) => (
+                            <span key={i} className="flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-0.5 text-xs text-gray-700">
+                                {v}
+                                <button onClick={() => removeEnum(i)} className="text-gray-400 hover:text-red-500">×</button>
+                            </span>
+                        ))}
+                    </div>
+                )}
+                <p className="mt-1 text-xs text-gray-400">Add predefined values that the LLM can select from. If no values are provided, the LLM can use any string value.</p>
+            </Field>
+
+            <div className="flex justify-end">
+                <button onClick={onDelete} className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs text-gray-600 hover:border-red-200 hover:bg-red-50 hover:text-red-600">
+                    Delete
+                </button>
+            </div>
+        </div>
+    );
+}
+
+function HeaderRow({ header, onChange, onDelete, secrets }) {
+    return (
+        <div className="rounded-xl border border-gray-200 bg-white p-4 space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+                <Field label="Type">
+                    <Select
+                        value={header.header_type}
+                        onChange={v => onChange({ ...header, header_type: v })}
+                        options={[
+                            { value: 'secret', label: 'Secret' },
+                            { value: 'value',  label: 'Value' },
+                        ]}
+                    />
+                </Field>
+                <Field label="Name">
+                    <Input value={header.name} onChange={v => onChange({ ...header, name: v })} placeholder="Authorization" />
+                </Field>
+            </div>
+
+            {header.header_type === 'secret' ? (
+                <Field label="Secret">
+                    <Select
+                        value={header.secret_id}
+                        onChange={v => onChange({ ...header, secret_id: v })}
+                        options={[
+                            { value: '', label: 'Select a secret…' },
+                            ...(secrets ?? []).map(s => ({ value: s.id, label: s.name })),
+                        ]}
+                    />
+                </Field>
+            ) : (
+                <Field label="Value">
+                    <Input value={header.value} onChange={v => onChange({ ...header, value: v })} placeholder="header value" />
+                </Field>
+            )}
+
+            <div className="flex justify-end">
+                <button onClick={onDelete} className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs text-gray-600 hover:border-red-200 hover:bg-red-50 hover:text-red-600">
+                    Delete
+                </button>
+            </div>
+        </div>
+    );
+}
+
+function SectionBlock({ title, hint, actionLabel, onAdd, children }) {
+    return (
+        <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 space-y-3">
+            <div className="flex items-start justify-between">
+                <div>
+                    <p className="text-sm font-semibold text-gray-900">{title}</p>
+                    {hint && <p className="mt-0.5 text-xs text-gray-400">{hint}</p>}
+                </div>
+                <button
+                    onClick={onAdd}
+                    className="shrink-0 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
+                >
+                    {actionLabel}
+                </button>
+            </div>
+            {children}
+        </div>
+    );
+}
+
+function AddToolDrawer({ onClose, onSave }) {
+    const [tool, setTool]       = useState(BLANK_TOOL);
+    const [secrets, setSecrets] = useState([]);
+
+    // Fetch workspace secrets for header dropdowns
+    useEffect(() => {
+        axios.get('/get-secrets').then(res => {
+            const list = Array.isArray(res.data) ? res.data : (res.data?.secrets ?? []);
+            setSecrets(list);
+        }).catch(() => {});
+    }, []);
+
+    const setSchema   = (patch) => setTool(t => ({ ...t, api_schema: { ...t.api_schema, ...patch } }));
+    const setBodyMeta = (patch) => setSchema({ request_body_schema: { ...tool.api_schema.request_body_schema, ...patch } });
+
+    // ── param helpers ────────────────────────────────────────────────────────
+    const updateQueryParam = (i, patch) =>
+        setSchema({ query_params_schema: tool.api_schema.query_params_schema.map((p, idx) => idx === i ? { ...p, ...patch } : p) });
+    const addQueryParam    = () => setSchema({ query_params_schema: [...tool.api_schema.query_params_schema, BLANK_PARAM()] });
+    const removeQueryParam = (i) => setSchema({ query_params_schema: tool.api_schema.query_params_schema.filter((_, idx) => idx !== i) });
+
+    const bodyProps       = tool.api_schema.request_body_schema?.properties ?? [];
+    const updateBodyProp  = (i, patch) => setBodyMeta({ properties: bodyProps.map((p, idx) => idx === i ? { ...p, ...patch } : p) });
+    const addBodyProp     = () => setBodyMeta({ properties: [...bodyProps, BLANK_PARAM()] });
+    const removeBodyProp  = (i) => setBodyMeta({ properties: bodyProps.filter((_, idx) => idx !== i) });
+
+    // ── header helpers ───────────────────────────────────────────────────────
+    const headers        = tool.api_schema.request_headers ?? [];
+    const updateHeader   = (i, patch) => setSchema({ request_headers: headers.map((h, idx) => idx === i ? { ...h, ...patch } : h) });
+    const addHeader      = () => setSchema({ request_headers: [...headers, BLANK_HEADER()] });
+    const removeHeader   = (i) => setSchema({ request_headers: headers.filter((_, idx) => idx !== i) });
+
+    const showBody = BODY_METHODS.has(tool.api_schema.method);
+
+    const handleSave = () => {
+        onSave(serializeTool(tool));
+        onClose();
+    };
+
+    return (
+        <>
+            <div className="fixed inset-0 z-40 bg-black/20 backdrop-blur-[1px]" onClick={onClose} />
+            <div className="fixed right-0 top-0 z-50 flex h-full w-[520px] flex-col border-l border-gray-200 bg-white shadow-2xl">
+
+                {/* Header */}
+                <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
+                    <div>
+                        <h3 className="text-sm font-semibold text-gray-900">Add webhook tool</h3>
+                        <p className="mt-0.5 text-xs text-gray-500">Configure a webhook tool for this agent</p>
+                    </div>
+                    <button onClick={onClose} className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600">
+                        <X className="h-4 w-4" />
+                    </button>
+                </div>
+
+                {/* Body */}
+                <div className="flex-1 overflow-y-auto space-y-5 px-5 py-5">
+
+                    {/* ── Basic info ── */}
+                    <Field label="Name" required>
+                        <Input value={tool.name} onChange={v => setTool(t => ({ ...t, name: v }))} placeholder="book_appointment" />
+                    </Field>
+
+                    <Field label="Description">
+                        <textarea
+                            value={tool.description}
+                            onChange={e => setTool(t => ({ ...t, description: e.target.value }))}
+                            rows={3}
+                            placeholder="Describe what this tool does…"
+                            className="w-full resize-none rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-400 focus:bg-white focus:outline-none focus:ring-1 focus:ring-gray-300"
+                        />
+                    </Field>
+
+                    <div className="grid grid-cols-[140px,1fr] gap-3">
+                        <Field label="Method">
+                            <Select
+                                value={tool.api_schema.method}
+                                onChange={v => setSchema({ method: v })}
+                                options={HTTP_METHODS.map(m => ({ value: m, label: m }))}
+                            />
+                        </Field>
+                        <Field label="URL" required>
+                            <Input value={tool.api_schema.url} onChange={v => setSchema({ url: v })} placeholder="https://example.com/webhook" />
+                        </Field>
+                    </div>
+
+                    {/* ── Response timeout ── */}
+                    <Field label="Response timeout (seconds)" hint="How long to wait for the tool to respond before timing out. Default is 20 seconds.">
+                        <div className="flex items-center gap-3">
+                            <input
+                                type="range"
+                                min={1} max={60}
+                                value={tool.response_timeout_secs}
+                                onChange={e => setTool(t => ({ ...t, response_timeout_secs: Number(e.target.value) }))}
+                                className="flex-1 accent-gray-900"
+                            />
+                            <span className="w-8 text-right text-sm font-medium text-gray-700">{tool.response_timeout_secs}</span>
+                        </div>
+                    </Field>
+
+                    {/* ── Flags ── */}
+                    <div className="space-y-3 rounded-lg border border-gray-200 bg-gray-50 p-3">
+                        <label className="flex cursor-pointer items-center gap-3">
+                            <input
+                                type="checkbox"
+                                checked={tool.disable_interruptions}
+                                onChange={e => setTool(t => ({ ...t, disable_interruptions: e.target.checked }))}
+                                className="h-4 w-4 rounded border-gray-300 accent-gray-900"
+                            />
+                            <div>
+                                <p className="text-sm font-medium text-gray-800">Disable interruptions</p>
+                                <p className="text-xs text-gray-400">Select this box to disable interruptions while the tool is running.</p>
+                            </div>
+                        </label>
+                    </div>
+
+                    {/* ── Pre-tool speech ── */}
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <p className="text-sm font-semibold text-gray-800">Pre-tool speech</p>
+                            <p className="mt-0.5 text-xs text-gray-400">Force agent speech before tool execution or let it decide automatically based on recent execution times.</p>
+                        </div>
+                        <Select
+                            value={tool.force_pre_tool_speech ? 'forced' : 'auto'}
+                            onChange={v => setTool(t => ({ ...t, force_pre_tool_speech: v === 'forced' }))}
+                            options={[
+                                { value: 'auto',   label: 'Auto' },
+                                { value: 'forced', label: 'Forced' },
+                            ]}
+                        />
+                    </div>
+
+                    {/* ── Execution mode ── */}
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <p className="text-sm font-semibold text-gray-800">Execution mode</p>
+                            <p className="mt-0.5 text-xs text-gray-400">Determines when and how the tool executes relative to agent speech.</p>
+                        </div>
+                        <Select
+                            value={tool.execution_mode}
+                            onChange={v => setTool(t => ({ ...t, execution_mode: v }))}
+                            options={[
+                                { value: 'immediate',    label: 'Immediate' },
+                                { value: 'blocking',     label: 'Blocking' },
+                                { value: 'background',   label: 'Background' },
+                            ]}
+                        />
+                    </div>
+
+                    {/* ── Tool call sound ── */}
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <p className="text-sm font-semibold text-gray-800">Tool call sound</p>
+                            <p className="mt-0.5 text-xs text-gray-400">Optional sound effect that plays during tool execution.</p>
+                        </div>
+                        <Select
+                            value={tool.tool_call_sound ?? 'none'}
+                            onChange={v => setTool(t => ({ ...t, tool_call_sound: v === 'none' ? null : v }))}
+                            options={[
+                                { value: 'none',   label: 'None' },
+                                { value: 'typing', label: 'Typing' },
+                                { value: 'beep',   label: 'Beep' },
+                            ]}
+                        />
+                    </div>
+
+                    {/* ── Headers ── */}
+                    <SectionBlock
+                        title="Headers"
+                        hint="Define headers that will be sent with the request"
+                        actionLabel="Add header"
+                        onAdd={addHeader}
+                    >
+                        {headers.map((h, i) => (
+                            <HeaderRow
+                                key={h._key}
+                                header={h}
+                                secrets={secrets}
+                                onChange={patch => updateHeader(i, patch)}
+                                onDelete={() => removeHeader(i)}
+                            />
+                        ))}
+                    </SectionBlock>
+
+                    {/* ── Query params ── */}
+                    <SectionBlock
+                        title="Query parameters"
+                        hint="Define parameters that will be collected by the LLM and sent as the query of the request."
+                        actionLabel="Add param"
+                        onAdd={addQueryParam}
+                    >
+                        {tool.api_schema.query_params_schema.map((p, i) => (
+                            <ParamRow
+                                key={p._key}
+                                param={p}
+                                onChange={patch => updateQueryParam(i, patch)}
+                                onDelete={() => removeQueryParam(i)}
+                            />
+                        ))}
+                    </SectionBlock>
+
+                    {/* ── Body params (POST / PUT / PATCH only) ── */}
+                    {showBody && (
+                        <SectionBlock
+                            title="Body parameters"
+                            hint="Define parameters that will be collected by the LLM and sent as the body of the request."
+                            actionLabel="Add param"
+                            onAdd={addBodyProp}
+                        >
+                            <Field label="Description">
+                                <textarea
+                                    value={tool.api_schema.request_body_schema?.description ?? ''}
+                                    onChange={e => setBodyMeta({ description: e.target.value })}
+                                    rows={2}
+                                    placeholder="Describe the body for the LLM…"
+                                    className="w-full resize-none rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-300"
+                                />
+                                <p className="mt-1 text-xs text-gray-400">This field will be passed to the LLM and should describe in detail how to extract the data from the transcript.</p>
+                            </Field>
+
+                            {bodyProps.length > 0 && (
+                                <div>
+                                    <p className="mb-2 text-xs font-semibold text-gray-500">Properties</p>
+                                    <div className="space-y-3">
+                                        {bodyProps.map((p, i) => (
+                                            <ParamRow
+                                                key={p._key}
+                                                param={p}
+                                                onChange={patch => updateBodyProp(i, patch)}
+                                                onDelete={() => removeBodyProp(i)}
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </SectionBlock>
+                    )}
+                </div>
+
+                {/* Footer */}
+                <div className="flex gap-2 justify-end border-t border-gray-100 px-5 py-4">
+                    <button onClick={onClose} className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50">
+                        Cancel
+                    </button>
+                    <button
+                        disabled={!tool.name.trim() || !tool.api_schema.url.trim()}
+                        onClick={handleSave}
+                        className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                        Add tool
+                    </button>
+                </div>
+            </div>
+        </>
+    );
+}
+
+
 
 const INITIAL_BUILT_IN_TOOLS = {
     end_call:               { description: '', response_timeout_secs: 20, disable_interruptions: false, force_pre_tool_speech: false, tool_call_sound: null, tool_call_sound_behavior: 'auto', tool_error_handling_mode: 'auto', params: { system_tool_type: 'end_call' } },
@@ -441,7 +1060,7 @@ const INITIAL_BUILT_IN_TOOLS = {
     voicemail_detection:    { description: '', response_timeout_secs: 20, disable_interruptions: false, force_pre_tool_speech: false, tool_call_sound: null, tool_call_sound_behavior: 'auto', tool_error_handling_mode: 'auto', params: { system_tool_type: 'voicemail_detection', voicemail_message: '' } },
 };
 
-export default function AgentToolsSection({ config }) {
+export default function AgentToolsSection({ config, agentId }) {
     const { trackChange } = useAgentChanges();
     const [activeToolTab, setActiveToolTab] = useState('tools');
 
@@ -459,6 +1078,24 @@ export default function AgentToolsSection({ config }) {
     const [drawerTool, setDrawerTool] = useState(null);
     // True when the drawer was opened automatically by a toggle-on; cancel should revert the toggle.
     const [drawerOpenedByToggle, setDrawerOpenedByToggle] = useState(false);
+    const [showAddTool, setShowAddTool] = useState(false);
+    const [customTools, setCustomTools] = useState([]);
+    const [toolsLoading, setToolsLoading] = useState(false);
+    const [toolIds, setToolIds] = useState(() => config?.agent?.prompt?.tool_ids ?? []);
+
+    // Fetch full tool details for each tool_id on mount
+    useEffect(() => {
+        const ids = config?.agent?.prompt?.tool_ids ?? [];
+        if (!ids.length) return;
+        setToolsLoading(true);
+        axios.get('/app/get-tools', { params: { tool_ids: ids } })
+            .then(res => {
+                const list = Array.isArray(res.data) ? res.data : (res.data?.tools ?? []);
+                setCustomTools(list);
+            })
+            .catch(() => {})
+            .finally(() => setToolsLoading(false));
+    }, []);
 
     const activeCount = Object.values(toolStates).filter(Boolean).length;
 
@@ -481,6 +1118,27 @@ export default function AgentToolsSection({ config }) {
             trackChange(`agent.prompt.built_in_tools.${drawerTool.id}`, null);
         }
         setDrawerOpenedByToggle(false);
+    };
+
+    // ── handleAddToolSave ─────────────────────────────────────────────────────
+    const handleAddToolSave = async (serialized) => {
+        try {
+            const res = await axios.post('/app/save-tool', {config: serialized});
+            const savedTool = res.data;
+            const newToolId = savedTool.toolId;
+
+            // Append full tool detail to local list
+            setCustomTools(prev => [...prev, savedTool]);
+
+            // Update tool_ids and track
+            setToolIds(prev => {
+                const updated = [...prev, newToolId];
+                trackChange('agent.prompt.tool_ids',updated);
+                return updated;
+            });
+        } catch (err) {
+            console.error('Failed to save tool:', err);
+        }
     };
 
     // ── handleToggle ──────────────────────────────────────────────────────────
@@ -516,7 +1174,7 @@ export default function AgentToolsSection({ config }) {
                 <div>
                     <div className="mb-4 flex items-center justify-between">
                         <h2 className="text-xl font-bold text-gray-900">Agent Tools</h2>
-                        <button className="rounded-lg bg-gray-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-gray-800">
+                        <button onClick={() => setShowAddTool(true)} className="rounded-lg bg-gray-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-gray-800">
                             Add tool
                         </button>
                     </div>
@@ -550,16 +1208,57 @@ export default function AgentToolsSection({ config }) {
                         </button>
                     </div>
 
-                    <div className="flex flex-col items-center justify-center rounded-xl border border-gray-200 bg-gray-50 py-16">
-                        <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl border border-gray-200 bg-white shadow-sm">
-                            <Wrench className="h-6 w-6 text-gray-400" />
+                    {toolsLoading ? (
+                        <div className="flex items-center justify-center gap-2 rounded-xl border border-gray-200 bg-gray-50 py-12">
+                            <svg className="h-4 w-4 animate-spin text-gray-400" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                            </svg>
+                            <span className="text-sm text-gray-400">Loading tools…</span>
                         </div>
-                        <p className="text-sm font-semibold text-gray-900">No tools found</p>
-                        <p className="mt-1 text-xs text-gray-500">This agent has no attached tools yet.</p>
-                        <button className="mt-4 rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800">
-                            Add tool
-                        </button>
-                    </div>
+                    ) : customTools.length > 0 ? (
+                        <div className="divide-y divide-gray-100 overflow-hidden rounded-xl border border-gray-200 bg-white">
+                            {customTools.map((t, i) => (
+                                <div key={t.tool_id ?? t.id ?? i} className="flex items-center justify-between px-4 py-3">
+                                    <div className="flex items-center gap-2.5">
+                                        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gray-100">
+                                            <Wrench className="h-3.5 w-3.5 text-gray-500" />
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-medium text-gray-900">{t.tool_name}</p>
+                                            {t.tool_description && <p className="text-xs text-gray-400 truncate max-w-[220px]">{t.tool_description}</p>}
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={() => {
+                                            const removedId = t.tool_id ?? t.id;
+                                            setCustomTools(prev => prev.filter((_, idx) => idx !== i));
+                                            setToolIds(prev => {
+                                                const updated = prev.filter(id => id !== removedId);
+                                                trackChange('agent.prompt.tool_ids', updated );
+                                                return updated;
+                                            });
+                                        }}
+                                        className="rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-500"
+                                        title="Detach tool"
+                                    >
+                                        <X className="h-3.5 w-3.5" />
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="flex flex-col items-center justify-center rounded-xl border border-gray-200 bg-gray-50 py-16">
+                            <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl border border-gray-200 bg-white shadow-sm">
+                                <Wrench className="h-6 w-6 text-gray-400" />
+                            </div>
+                            <p className="text-sm font-semibold text-gray-900">No tools found</p>
+                            <p className="mt-1 text-xs text-gray-500">This agent has no attached tools yet.</p>
+                            <button onClick={() => setShowAddTool(true)} className="mt-4 rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800">
+                                Add tool
+                            </button>
+                        </div>
+                    )}
                 </div>
 
                 {/* Right — System Tools */}
@@ -616,6 +1315,15 @@ export default function AgentToolsSection({ config }) {
                     onClose={() => { setDrawerTool(null); setDrawerOpenedByToggle(false); }}
                     onSave={handleSave}
                     onCancel={handleDrawerCancel}
+                    currentAgentId={agentId}
+                />
+            )}
+
+            {/* Add Webhook Tool Drawer */}
+            {showAddTool && (
+                <AddToolDrawer
+                    onClose={() => setShowAddTool(false)}
+                    onSave={handleAddToolSave}
                 />
             )}
         </>

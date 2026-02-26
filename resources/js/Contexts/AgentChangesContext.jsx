@@ -179,6 +179,10 @@ export function AgentChangesProvider({ children, initialAgent }) {
                 if ('built_in_tools' in changes.agent.prompt) {
                     conversationConfig.agent.prompt.built_in_tools = changes.agent.prompt.built_in_tools;
                 }
+
+                if ('tool_ids' in changes.agent.prompt) {
+                    conversationConfig.agent.prompt.tool_ids = changes.agent.prompt.tool_ids;
+                }
             }
             
             // Add other agent fields if they changed

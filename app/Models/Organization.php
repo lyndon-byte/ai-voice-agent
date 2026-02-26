@@ -18,4 +18,10 @@ class Organization extends Tenant
 
         return $this->hasMany(KnowledgeBase::class);
     }
+
+    public function tools(){
+
+        return $this->hasMany(Tools::class);
+    }
+
 }

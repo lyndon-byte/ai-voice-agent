@@ -125,7 +125,7 @@ export default function Agent({ agent,currentVoice,localKb }) {
                         )}
                         
                         {activeTab === 'tools' && (
-                            <ToolsTab config={config} />
+                            <ToolsTab config={config} agentId={agent.agent_id} />
                         )}
                         
                         {activeTab === 'evaluation' && (

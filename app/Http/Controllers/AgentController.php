@@ -23,6 +23,22 @@ class AgentController extends Controller
 
     }
 
+
+    public function getAgents(Request $request){
+
+        $user = auth()->user();
+        $org = $user->organization;
+
+        $agents = $org->agents()->orderBy('created_at','DESC')->get();
+
+        return response()->json([
+
+            'agents' => $agents 
+
+        ]);
+
+    }
+
     public function create(Request $request){
 
         return Inertia::render('CreateAgent');

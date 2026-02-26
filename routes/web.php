@@ -1,12 +1,12 @@
 <?php
 
 use App\Http\Controllers\AgentController;
-use App\Http\Controllers\KnowledgeBaseController; 
 use App\Http\Controllers\JobTrackerController;
+use App\Http\Controllers\KnowledgeBaseController; 
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ToolsController;
 use App\Http\Controllers\VoiceController;
 use Illuminate\Foundation\Application;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -31,6 +31,7 @@ Route::middleware(['auth','verified'])->group(function () {
     })->name('dashboard');
 
     Route::get('/app/agents', [AgentController::class, 'index'])->name('agents');
+    Route::get('/app/get-agents', [AgentController::class, 'getAgents'])->name('agents.get');
     Route::get('/app/agents/agent', [AgentController::class, 'viewAgent'])->name('agent.view');
     Route::get('/app/agents/create', [AgentController::class, 'create'])->name('agents.create');
     Route::post('/app/agents/create', [AgentController::class, 'store'])->name('agents.create.store');
@@ -46,10 +47,14 @@ Route::middleware(['auth','verified'])->group(function () {
 
     Route::post('/check-job',[JobTrackerController::class, 'checkJob']);
 
+    Route::post('/app/save-tool',[ToolsController::class, 'store']);
+    Route::get('/app/get-tools',[ToolsController::class, 'getTools']);
+
+
     Route::get('/test',function(){
 
         $client = new \GuzzleHttp\Client();
-        $response = $client->request('GET', 'https://api.elevenlabs.io/v1/convai/agents/agent_0001khkj48t8f818stz6zrw03s81',[
+        $response = $client->request('GET', 'https://api.elevenlabs.io/v1/convai/tools/tool_7501kdnr860cfxvvk26p0f3j36t3',[
 
             'headers' => [
 
@@ -58,7 +63,9 @@ Route::middleware(['auth','verified'])->group(function () {
             ]
 
         ]);
+
         return json_decode($response->getBody()->getContents(),true);
+
     });
 });
 
