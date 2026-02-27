@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import {
     MessageSquare, Plus, Trash2, Clock, Hash, FileText, Activity,
-    ChevronRight, Loader2, X, Play, Pause, RotateCcw, RotateCw,
+    ChevronRight, ChevronLeft, Loader2, X, Play, Pause, RotateCcw, RotateCw,
     MoreHorizontal, Info, RefreshCw, CheckCircle2, XCircle, AlertCircle, FormInput,
 } from 'lucide-react';
 import axios from 'axios';
@@ -90,7 +90,7 @@ function AudioPlayer({ conversationId }) {
         setError(null);
         try {
             const { data } = await axios.get('/app/get-conversation-audio', {
-                params: { conversationId },
+                params: { conversation_id: conversationId },
                 responseType: 'blob',
             });
             setAudioUrl(URL.createObjectURL(data));
@@ -371,7 +371,7 @@ function ConversationDrawer({ conversation, onClose }) {
         setDetailError(null);
         setActiveTab('overview');
 
-        axios.get('/app/get-conversation-details', { params: { conversationId } })
+        axios.get('/app/get-conversation-details', { params: { conversation_id: conversationId } })
             .then(({ data }) => setDetail(data?.data ?? data))
             .catch(err       => setDetailError(err?.response?.data?.message ?? 'Failed to load details.'))
             .finally(()      => setDetailLoading(false));
@@ -559,25 +559,53 @@ export default function EvaluationTab({ platformSettings, agentId }) {
     const [conversationsLoading, setConversationsLoading] = useState(false);
     const [conversationsError,   setConversationsError]   = useState(null);
     const [drawerConversation,   setDrawerConversation]   = useState(null);
+    const [nextCursor,           setNextCursor]           = useState(null);
+    const [prevCursors,          setPrevCursors]          = useState([]); // stack of previous cursors
 
     const filterChips = [
         'Date After','Date Before','Call status','Criteria',
         'Data','Duration','Rating','Comments','Tools','Language','User','Channel',
     ];
 
-    useEffect(() => {
-        if (!agentId) return;
+    const fetchConversations = useCallback((cursor = null) => {
         let cancelled = false;
         setConversationsLoading(true);
         setConversationsError(null);
 
-        axios.get('/app/get-conversations', { params: { agentId } })
-            .then(({ data }) => { if (!cancelled) setConversations(data?.data ?? data ?? []); })
-            .catch(err       => { if (!cancelled) setConversationsError(err?.response?.data?.message ?? 'Failed to load conversations.'); })
-            .finally(()      => { if (!cancelled) setConversationsLoading(false); });
+        const params = { agent_id: agentId, ...(cursor ? { next_cursor: cursor } : {}) };
+
+        axios.get('/app/get-conversations', { params })
+            .then(({ data }) => {
+                if (!cancelled) {
+                    setConversations(data?.conversations ?? data?.data ?? data ?? []);
+                    setNextCursor(data?.next_cursor ?? null);
+                }
+            })
+            .catch(err => { if (!cancelled) setConversationsError(err?.response?.data?.message ?? 'Failed to load conversations.'); })
+            .finally(()  => { if (!cancelled) setConversationsLoading(false); });
 
         return () => { cancelled = true; };
     }, [agentId]);
+
+    useEffect(() => {
+        if (!agentId) return;
+        setPrevCursors([]);
+        setNextCursor(null);
+        return fetchConversations(null);
+    }, [agentId]);
+
+    const handleNextPage = () => {
+        if (!nextCursor) return;
+        setPrevCursors(prev => [...prev, null]); // push current page marker
+        fetchConversations(nextCursor);
+    };
+
+    const handlePrevPage = () => {
+        const stack = [...prevCursors];
+        const prevCursor = stack.pop() ?? null;
+        setPrevCursors(stack);
+        fetchConversations(prevCursor);
+    };
 
     // Criteria handlers
     const handleAddCriterion = () => {
@@ -638,6 +666,7 @@ export default function EvaluationTab({ platformSettings, agentId }) {
         );
 
         return (
+            <>
             <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
                 {/* Header */}
                 <div className="grid grid-cols-[1fr,90px,60px,100px,20px] gap-3 border-b border-gray-100 bg-gray-50 px-4 py-2.5">
@@ -687,6 +716,25 @@ export default function EvaluationTab({ platformSettings, agentId }) {
                     })}
                 </div>
             </div>
+
+            {/* Pagination */}
+            <div className="mt-3 flex items-center justify-between">
+                <button
+                    onClick={handlePrevPage}
+                    disabled={prevCursors.length === 0 || conversationsLoading}
+                    className="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 shadow-sm transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                    <ChevronLeft className="h-3.5 w-3.5" /> Previous
+                </button>
+                <button
+                    onClick={handleNextPage}
+                    disabled={!nextCursor || conversationsLoading}
+                    className="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 shadow-sm transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                    Next <ChevronRight className="h-3.5 w-3.5" />
+                </button>
+            </div>
+            </>
         );
     };
 
