@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AgentController;
+use App\Http\Controllers\AnalysisController;
 use App\Http\Controllers\JobTrackerController;
 use App\Http\Controllers\KnowledgeBaseController; 
 use App\Http\Controllers\ProfileController;
@@ -50,11 +51,15 @@ Route::middleware(['auth','verified'])->group(function () {
     Route::post('/app/save-tool',[ToolsController::class, 'store']);
     Route::get('/app/get-tools',[ToolsController::class, 'getTools']);
 
+    Route::get('/app/get-conversations',[AnalysisController::class, 'getConversations']);
+    Route::get('/app/get-conversation-details',[AnalysisController::class, 'getConversationDetails']);
+    Route::get('/app/get-conversation-audio',[AnalysisController::class, 'getConversationAudio']);
+
 
     Route::get('/test',function(){
 
         $client = new \GuzzleHttp\Client();
-        $response = $client->request('GET', 'https://api.elevenlabs.io/v1/convai/tools/tool_7501kdnr860cfxvvk26p0f3j36t3',[
+        $response = $client->request('GET', 'https://api.elevenlabs.io/v1/convai/agents/agent_0001khkj48t8f818stz6zrw03s81',[
 
             'headers' => [
 

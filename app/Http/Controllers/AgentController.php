@@ -98,11 +98,15 @@ class AgentController extends Controller
             'conversation_config' => 'sometimes|array',
             'platform_settings' => 'sometimes|array',
         ]);
- 
+
         $client = new Client();
 
         $agentId = $validated['agent_id'];
         unset($validated['agent_id']);
+
+        logger()->info("test", [
+            'payload' =>  $validated,
+        ]);
 
         $response = $client->request('PATCH', "https://api.elevenlabs.io/v1/convai/agents/{$agentId}", [
             'headers' => [

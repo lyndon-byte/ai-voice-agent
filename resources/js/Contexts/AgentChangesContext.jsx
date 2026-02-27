@@ -225,20 +225,25 @@ export function AgentChangesProvider({ children, initialAgent }) {
             platformSettings.evaluation = { ...changes.evaluation };
         }
 
-        if (changes.data_collection) {
-            platformSettings.data_collection = changes.data_collection;
+        if (Array.isArray(changes.data_collection) && changes.data_collection.length > 0) {
+            platformSettings.data_collection = changes.data_collection.reduce((map, { id, dynamic_variable, ...rest }) => {
+                if (dynamic_variable) map[dynamic_variable] = rest;
+                return map;
+            }, {});
         }
-
         if (changes.workspace_overrides && hasKeys(changes.workspace_overrides)) {
             platformSettings.workspace_overrides = { ...changes.workspace_overrides };
         }
 
         // Only add platform_settings if it has changes
         if (hasKeys(platformSettings)) {
+
             payload.platform_settings = platformSettings;
+            
         }
 
         return payload;
+        
     }, [changes]);
 
     // Save changes
@@ -247,7 +252,7 @@ export function AgentChangesProvider({ children, initialAgent }) {
         try {
             
             const payload = mapToAPIFormat();
-            payload.agent_id = agentId; // Add agent_id to payload
+            payload.agent_id = agentId;
             
             const response = await axios.patch('/app/agents/update', payload);
             clearChanges();

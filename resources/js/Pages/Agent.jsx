@@ -129,7 +129,7 @@ export default function Agent({ agent,currentVoice,localKb }) {
                         )}
                         
                         {activeTab === 'evaluation' && (
-                            <EvaluationTab platformSettings={platformSettings} />
+                            <EvaluationTab platformSettings={platformSettings} agentId={agent.agent_id} />
                         )}
                         
                         {activeTab === 'widget' && (
