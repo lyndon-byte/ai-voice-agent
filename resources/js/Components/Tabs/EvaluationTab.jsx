@@ -203,7 +203,36 @@ function CallSuccessBadge({ value }) {
     );
 }
 
-// ─── Overview tab ───────────────────────────────────────────────────────────
+function DataCollectionResultItem({ item, index }) {
+
+    const [showRationale, setShowRationale] = useState(false);
+
+    return (
+        <div className={`${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
+            <div className="flex items-center justify-between gap-4 px-3 py-2.5">
+                <span className="text-sm font-medium text-gray-600 shrink-0">{item.data_collection_id}</span>
+                <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-800 text-right break-all">{item.value ?? '—'}</span>
+                    {item.rationale && (
+                        <button
+                            onClick={() => setShowRationale(v => !v)}
+                            title="Show rationale"
+                            className={`flex-shrink-0 rounded-full p-0.5 transition-colors ${showRationale ? 'text-blue-500' : 'text-gray-500 hover:text-gray-700'}`}
+                        >
+                            <Info className="h-3.5 w-3.5" />
+                        </button>
+                    )}
+                </div>
+            </div>
+            {showRationale && item.rationale && (
+                <div className="border-t border-gray-100 bg-blue-50/50 px-3 py-2">
+                    <p className="text-xs leading-relaxed text-gray-500">{item.rationale}</p>
+                </div>
+            )}
+        </div>
+    );
+}
+
 function OverviewTab({ detail }) {
     const analysis = detail?.analysis ?? {};
     const meta     = detail?.metadata ?? {};
@@ -239,21 +268,14 @@ function OverviewTab({ detail }) {
             {/* Data collection results */}
             {analysis.data_collection_results_list?.length > 0 && (
                 <div className="mt-5">
-                    <p className="mb-2 text-sm font-semibold text-gray-900">Data collected</p>
-                    <div className="overflow-hidden rounded-lg border border-gray-200">
+                    <p className="mb-2 text-sm font-semibold text-gray-900">Data collection</p>
+                    <div className="overflow-hidden rounded-lg border border-gray-200 divide-y divide-gray-100">
                         {analysis.data_collection_results_list.map((item, i) => (
-                            <div
-                                key={item.data_collection_id ?? i}
-                                className={`flex items-start justify-between gap-4 px-3 py-2.5 ${i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}
-                            >
-                                <span className="text-sm font-medium text-gray-600 shrink-0">{item.data_collection_id}</span>
-                                <span className="text-sm text-gray-800 text-right break-all">{item.value ?? '—'}</span>
-                            </div>
+                            <DataCollectionResultItem key={item.data_collection_id ?? i} item={item} index={i} />
                         ))}
                     </div>
                 </div>
             )}
-
         </div>
     );
 }
@@ -337,12 +359,6 @@ function ClientDataTab({ detail }) {
                 <div>
                     <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-400">Dynamic Variables</p>
                     <DataTable data={dynVars} />
-                </div>
-            )}
-            {Object.keys(sourceInfo).length > 0 && (
-                <div>
-                    <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-400">Source Info</p>
-                    <DataTable data={sourceInfo} />
                 </div>
             )}
         </div>
