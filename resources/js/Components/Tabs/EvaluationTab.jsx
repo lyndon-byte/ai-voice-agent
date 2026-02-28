@@ -235,6 +235,25 @@ function OverviewTab({ detail }) {
                     </div>
                 ))}
             </div>
+
+            {/* Data collection results */}
+            {analysis.data_collection_results_list?.length > 0 && (
+                <div className="mt-5">
+                    <p className="mb-2 text-sm font-semibold text-gray-900">Data collected</p>
+                    <div className="overflow-hidden rounded-lg border border-gray-200">
+                        {analysis.data_collection_results_list.map((item, i) => (
+                            <div
+                                key={item.data_collection_id ?? i}
+                                className={`flex items-start justify-between gap-4 px-3 py-2.5 ${i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}
+                            >
+                                <span className="text-sm font-medium text-gray-600 shrink-0">{item.data_collection_id}</span>
+                                <span className="text-sm text-gray-800 text-right break-all">{item.value ?? '—'}</span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
         </div>
     );
 }
@@ -245,26 +264,47 @@ function TranscriptionTab({ transcript }) {
         <p className="py-10 text-center text-sm text-gray-400">No transcript available.</p>
     );
     return (
-        <div className="space-y-4">
+        <div className="space-y-3">
             {transcript.map((turn, idx) => {
                 const isAgent = turn.role === 'agent';
+                const toolCalls = turn.tool_calls?.filter(t => t?.tool_name) ?? [];
                 return (
-                    <div key={idx} className={`flex gap-3 ${isAgent ? '' : 'flex-row-reverse'}`}>
-                        <div className={`flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-xs font-bold ${
-                            isAgent ? 'bg-gray-900 text-white' : 'bg-blue-100 text-blue-700'
-                        }`}>
-                            {isAgent ? 'A' : 'U'}
-                        </div>
-                        <div className={`max-w-[80%] ${isAgent ? '' : 'text-right'}`}>
-                            <div className={`inline-block rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed ${
-                                isAgent ? 'bg-gray-100 text-gray-800' : 'bg-blue-600 text-white'
+                    <div key={idx} className="space-y-1.5">
+                        <div className={`flex gap-3 ${isAgent ? '' : 'flex-row-reverse'}`}>
+                            <div className={`flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-xs font-bold ${
+                                isAgent ? 'bg-gray-900 text-white' : 'bg-blue-100 text-blue-700'
                             }`}>
-                                {turn.message}
+                                {isAgent ? 'A' : 'U'}
                             </div>
-                            <p className="mt-1 text-xs text-gray-400">
-                                {formatDuration(turn.time_in_call_secs)} in call
-                            </p>
+                            <div className={`max-w-[80%] ${isAgent ? '' : 'text-right'}`}>
+                                <div className={`inline-block rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed ${
+                                    isAgent ? 'bg-gray-100 text-gray-800' : 'bg-blue-600 text-white'
+                                }`}>
+                                    {turn.message}
+                                </div>
+                                <p className="mt-1 text-xs text-gray-400">
+                                    {formatDuration(turn.time_in_call_secs)} in call
+                                </p>
+                            </div>
                         </div>
+
+                        {/* Tool calls */}
+                        {toolCalls.length > 0 && (
+                            <div className={`flex gap-3 ${isAgent ? '' : 'flex-row-reverse'}`}>
+                                <div className="h-7 w-7 flex-shrink-0" />
+                                <div className="flex flex-wrap gap-1.5">
+                                    {toolCalls.map((tool, tIdx) => (
+                                        <span
+                                            key={tIdx}
+                                            className="inline-flex items-center gap-1.5 rounded-md border border-violet-200 bg-violet-50 px-2 py-1 text-xs font-medium text-violet-700"
+                                        >
+                                            <Wrench className="h-3 w-3 flex-shrink-0" />
+                                            {tool.tool_name}
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 );
             })}
