@@ -12,6 +12,7 @@ import WidgetTab from '@/Components/Tabs/WidgetTab';
 import AdvancedTab from '@/Components/Tabs/AdvancedTab';
 
 import { AgentChangesProvider } from '@/Contexts/Agentchangescontext';
+import { ElevenLabsProvider } from '@/Contexts/ElevenLabsProvider';
 import UnsavedChangesBar from '@/Components/Unsavedchangesbar';
 
 export default function Agent({ agent,currentVoice,localKb }) {
@@ -40,7 +41,7 @@ export default function Agent({ agent,currentVoice,localKb }) {
     return (
 
         <AgentChangesProvider initialAgent={agent}>
-
+            <ElevenLabsProvider>
             <AuthenticatedLayout
                 header={
                     <div className="flex items-center justify-between">
@@ -148,7 +149,7 @@ export default function Agent({ agent,currentVoice,localKb }) {
                 />
 
             </AuthenticatedLayout>
-
+         </ElevenLabsProvider>                  
       </AgentChangesProvider>
 
     );

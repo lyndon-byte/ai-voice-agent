@@ -17,7 +17,7 @@ class AnalysisController extends Controller
 
         $client = new Client();
  
-        $response = $client->request('GET', "https://api.elevenlabs.io/v1/convai/conversations?page_size=10&cursor={$cursor}&agent_id={$validated['agent_id']}", [
+        $response = $client->request('GET', "https://api.elevenlabs.io/v1/convai/conversations?page_size=8&cursor={$cursor}&agent_id={$validated['agent_id']}", [
 
              'headers' => [
                  'xi-api-key' => env('ELEVEN_LABS_KEY'),
