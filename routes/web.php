@@ -7,6 +7,7 @@ use App\Http\Controllers\KnowledgeBaseController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ToolsController;
 use App\Http\Controllers\VoiceController;
+use App\Http\Controllers\WorkSpaceController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -38,6 +39,7 @@ Route::middleware(['auth','verified'])->group(function () {
     Route::post('/app/agents/create', [AgentController::class, 'store'])->name('agents.create.store');
     Route::patch('/app/agents/update', [AgentController::class, 'update'])->name('agents.update');
 
+    Route::post('/app/add-avatar-image', [AgentController::class, 'addAvatarImage']);
 
     Route::get('/app/voices', [VoiceController::class, 'getVoices'])->name('voices');
 
@@ -55,6 +57,11 @@ Route::middleware(['auth','verified'])->group(function () {
     Route::get('/app/get-conversation-details',[AnalysisController::class, 'getConversationDetails']);
     Route::get('/app/get-conversation-audio',[AnalysisController::class, 'getConversationAudio']);
 
+    Route::get('/app/get-webhooks',[WorkSpaceController::class, 'webhooks']);
+    Route::post('/app/create-webhook',[WorkSpaceController::class, 'createWebhook']);
+    Route::get('/app/get-secrets',[WorkSpaceController::class, 'secrets']);
+    Route::post('/app/create-secret',[WorkSpaceController::class, 'createSecret']);
+    
 
     Route::get('/test',function(){
 

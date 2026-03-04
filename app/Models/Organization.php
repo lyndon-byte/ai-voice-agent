@@ -24,4 +24,15 @@ class Organization extends Tenant
         return $this->hasMany(Tools::class);
     }
 
+    public function webhooks(){
+
+        return $this->hasMany(Webhooks::class);
+    }
+
+    public function secrets(){
+
+        return $this->hasMany(Secrets::class);
+    }
+
+
 }

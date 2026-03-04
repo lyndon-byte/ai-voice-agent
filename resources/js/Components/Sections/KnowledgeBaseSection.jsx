@@ -90,7 +90,7 @@ function DocumentDrawer({ item, onClose }) {
         setLoading(true); setError('');
         try {
             const { data } = await axios.get('/app/knowledge-base/get-folder-documents', {
-                params: { documentId },
+                params: { folder_id: documentId },
             });
             setFolderDocs(Array.isArray(data) ? data : data.documents ?? []);
         } catch {
@@ -104,7 +104,7 @@ function DocumentDrawer({ item, onClose }) {
         setLoading(true); setError('');
         try {
             const { data } = await axios.get('/app/knowledge-base/get-document', {
-                params: { documentId },
+                params: { document_id: documentId },
             });
             setDocData(data);
         } catch {
@@ -120,7 +120,7 @@ function DocumentDrawer({ item, onClose }) {
         setLoading(true); setError(''); setDocData(null);
         try {
             const { data } = await axios.get('/app/knowledge-base/get-document', {
-                params: { documentId: child.id },
+                params: { document_id: child.id },
             });
             setDocData(data);
         } catch {
@@ -280,11 +280,11 @@ function DocumentDrawer({ item, onClose }) {
                             </div>
 
                             {/* Text content block */}
-                            {docData.content && (
+                            {docData.extracted_inner_html && (
                                 <div className="px-5 py-4">
                                     <p className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-gray-400">Content</p>
                                     <pre className="whitespace-pre-wrap rounded-xl border border-gray-200 bg-gray-50 p-4 text-xs leading-relaxed text-gray-700">
-                                        {docData.content}
+                                        {docData.extracted_inner_html}
                                     </pre>
                                 </div>
                             )}

@@ -2,7 +2,7 @@ import { useState, useRef, useCallback,useEffect } from 'react';
 import { useAgentChanges } from '@/Contexts/AgentChangesContext';
 import { useElevenLabs } from '@/Contexts/ElevenLabsProvider';
 import ElevenLabsWidget from '../ElevenLabsWidget';
-
+import axios from 'axios';
 // ─── Primitives ──────────────────────────────────────────────────────────────
 
 function SectionRow({ title, description, children }) {
@@ -127,6 +127,48 @@ function FieldError({ message }) {
     );
 }
 
+function StyleColorRow({ label, description, value, onChange }) {
+
+    const inputRef = useRef(null);
+    const resolved = value || '#888888';
+
+    return (
+        <div className="flex items-center gap-4 py-2 border-b border-gray-50 last:border-b-0">
+            <span className="w-32 shrink-0 text-sm font-semibold text-gray-700">{label}</span>
+            <div
+                className="flex flex-1 items-center gap-2.5 rounded-lg border border-gray-200 bg-white px-3 py-2 cursor-pointer hover:border-gray-300 transition-colors"
+                onClick={() => inputRef.current?.click()}
+            >
+                <span
+                    className="h-4 w-4 rounded-full border border-black/10 shrink-0"
+                    style={{ backgroundColor: resolved, opacity: value ? 1 : 0.35 }}
+                />
+                <span className={`text-sm font-mono ${value ? 'text-gray-800' : 'text-gray-400'}`}>{value || 'not set'}</span>
+                <input
+                    ref={inputRef}
+                    type="color"
+                    value={resolved}
+                    onChange={(e) => onChange(e.target.value)}
+                    className="sr-only"
+                />
+                {value && (
+                    <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); onChange(null); }}
+                        className="ml-auto text-gray-300 hover:text-gray-500 transition-colors"
+                        title="Clear"
+                    >
+                        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                )}
+            </div>
+            <span className="hidden sm:block w-56 shrink-0 text-xs text-gray-400 leading-snug">{description}</span>
+        </div>
+    );
+}
+
 function EmbedCodeBlock({ agentId }) {
     const [copied, setCopied] = useState(false);
 
@@ -178,6 +220,7 @@ function EmbedCodeBlock({ agentId }) {
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function WidgetTab({ agent, platformSettings }) {
+
     const { trackChange } = useAgentChanges();
     const { config,setConfig,agentId, setAgentId } = useElevenLabs();
     const settings = platformSettings?.widget || {};
@@ -192,9 +235,27 @@ export default function WidgetTab({ agent, platformSettings }) {
     const [feedbackEnabled, setFeedbackEnabled] = useState(!!settings.end_feedback);
     const [termsEnabled, setTermsEnabled]   = useState(!!settings.terms_text);
     const [termsText, setTermsText]         = useState(settings.terms_text     || '');
+    const [mainLabel, setMainLabel]         = useState(settings.text_contents?.main_label || '');
+    const [startCall, setStartCall]         = useState(settings.text_contents?.start_call || '');
+
+    const st = settings.styles || {};
+    const [styleBase,          setStyleBase]          = useState(st.base          ?? '#0e0e0e');
+    const [styleBaseHover,     setStyleBaseHover]     = useState(st.base_hover    ?? null);
+    const [styleBaseActive,    setStyleBaseActive]    = useState(st.base_active   ?? null);
+    const [styleBaseBorder,    setStyleBaseBorder]    = useState(st.base_border   ?? null);
+    const [styleBaseSubtle,    setStyleBaseSubtle]    = useState(st.base_subtle   ?? null);
+    const [styleBasePrimary,   setStyleBasePrimary]   = useState(st.base_primary  ?? null);
+    const [styleBaseError,     setStyleBaseError]     = useState(st.base_error    ?? null);
+    const [styleAccent,        setStyleAccent]        = useState(st.accent        ?? null);
+    const [styleAccentHover,   setStyleAccentHover]   = useState(st.accent_hover  ?? null);
+    const [styleAccentActive,  setStyleAccentActive]  = useState(st.accent_active ?? null);
+    const [styleAccentBorder,  setStyleAccentBorder]  = useState(st.accent_border ?? null);
+    const [styleAccentSubtle,  setStyleAccentSubtle]  = useState(st.accent_subtle ?? null);
+    const [styleAccentPrimary, setStyleAccentPrimary] = useState(st.accent_primary ?? null);
 
     // Only show errors after the user has interacted with the field
-    const [touchedAvatarUrl, setTouchedAvatarUrl] = useState(false);
+    const [avatarUploading, setAvatarUploading]   = useState(false);
+    const [avatarUploadError, setAvatarUploadError] = useState(null);
     const [touchedTermsText, setTouchedTermsText] = useState(false);
 
     const fileInputRef = useRef(null);
@@ -214,6 +275,11 @@ export default function WidgetTab({ agent, platformSettings }) {
             avatarType, orbColor1, orbColor2, avatarUrl,
             variant, placement, collapsible,
             feedbackEnabled, termsEnabled, termsText,
+            mainLabel, startCall,
+            styleBase, styleBaseHover, styleBaseActive, styleBaseBorder,
+            styleBaseSubtle, styleBasePrimary, styleBaseError,
+            styleAccent, styleAccentHover, styleAccentActive,
+            styleAccentBorder, styleAccentSubtle, styleAccentPrimary,
             ...overrides,
         };
         return {
@@ -225,8 +291,32 @@ export default function WidgetTab({ agent, platformSettings }) {
             dismissible:  m.collapsible,
             end_feedback: m.feedbackEnabled ? { type: 'rating' } : null,
             terms_text:   m.termsEnabled ? m.termsText : null,
+            text_contents: {
+                main_label: m.mainLabel,
+                start_call: m.startCall,
+            },
+            styles: {
+                base:           m.styleBase,
+                base_hover:     m.styleBaseHover,
+                base_active:    m.styleBaseActive,
+                base_border:    m.styleBaseBorder,
+                base_subtle:    m.styleBaseSubtle,
+                base_primary:   m.styleBasePrimary,
+                base_error:     m.styleBaseError,
+                accent:         m.styleAccent,
+                accent_hover:   m.styleAccentHover,
+                accent_active:  m.styleAccentActive,
+                accent_border:  m.styleAccentBorder,
+                accent_subtle:  m.styleAccentSubtle,
+                accent_primary: m.styleAccentPrimary,
+            },
         };
-    }, [avatarType, orbColor1, orbColor2, avatarUrl, variant, placement, collapsible, feedbackEnabled, termsEnabled, termsText]);
+    }, 
+    [
+        avatarType, orbColor1, orbColor2, avatarUrl, variant, placement, collapsible, feedbackEnabled, termsEnabled, termsText, mainLabel, startCall,
+        styleBase, styleBaseHover, styleBaseActive, styleBaseBorder, styleBaseSubtle, styleBasePrimary, styleBaseError,
+        styleAccent, styleAccentHover, styleAccentActive, styleAccentBorder, styleAccentSubtle, styleAccentPrimary
+    ]);
 
     // ── Live preview (setConfig) — merges only affected keys ─────────────────
     // Avatar fields are nested so we spread the existing avatar slice first.
@@ -254,24 +344,49 @@ export default function WidgetTab({ agent, platformSettings }) {
                 next.avatar = { ...prev.avatar, ...avatarPatch };
             }
 
+            if ('mainLabel' in patch || 'startCall' in patch) {
+                next.text_contents = {
+                    ...(prev.text_contents || {}),
+                    ...('mainLabel' in patch ? { main_label: patch.mainLabel } : {}),
+                    ...('startCall' in patch ? { start_call: patch.startCall } : {}),
+                };
+            }
+
+            const STYLE_MAP = {
+                styleBase: 'base', styleBaseHover: 'base_hover', styleBaseActive: 'base_active',
+                styleBaseBorder: 'base_border', styleBaseSubtle: 'base_subtle', styleBasePrimary: 'base_primary',
+                styleBaseError: 'base_error', styleAccent: 'accent', styleAccentHover: 'accent_hover',
+                styleAccentActive: 'accent_active', styleAccentBorder: 'accent_border',
+                styleAccentSubtle: 'accent_subtle', styleAccentPrimary: 'accent_primary',
+            };
+            const stylesPatch = {};
+            for (const [patchKey, configKey] of Object.entries(STYLE_MAP)) {
+                if (patchKey in patch) stylesPatch[configKey] = patch[patchKey];
+            }
+            if (Object.keys(stylesPatch).length) {
+                next.styles = { ...(prev.styles || {}), ...stylesPatch };
+            }
+
+
             return next;
+
         });
     }, [setConfig, termsEnabled, termsText]);
 
     // ── Guard: block trackChange when state is invalid ────────────────────────
     const track = useCallback((overrides = {}) => {
         const next = { avatarType, avatarUrl, termsEnabled, termsText, ...overrides };
-        const hasAvatarError = (next.avatarType === 'link' || next.avatarType === 'image') && !next.avatarUrl?.trim();
+        const hasAvatarError = next.avatarType === 'image' && !next.avatarUrl?.trim();
         const hasTermsError  = next.termsEnabled && !next.termsText?.trim();
         if (hasAvatarError || hasTermsError) return;
         trackChange('widget', buildData(overrides));
     }, [trackChange, buildData, avatarType, avatarUrl, termsEnabled, termsText]);
 
     // ── Handlers — call liveUpdate (always) + track (guarded) ────────────────
-    const handleAvatarType   = (v) => { setAvatarType(v);      setTouchedAvatarUrl(false); liveUpdate({ avatarType: v }); track({ avatarType: v }); };
+    const handleAvatarType   = (v) => { setAvatarType(v);      setAvatarUploadError(null); liveUpdate({ avatarType: v }); track({ avatarType: v }); };    
     const handleOrbColor1    = (v) => { setOrbColor1(v);       liveUpdate({ orbColor1: v });    track({ orbColor1: v }); };
     const handleOrbColor2    = (v) => { setOrbColor2(v);       liveUpdate({ orbColor2: v });    track({ orbColor2: v }); };
-    const handleAvatarUrl    = (v) => { setAvatarUrl(v);       setTouchedAvatarUrl(true); liveUpdate({ avatarUrl: v }); track({ avatarUrl: v }); };
+    const handleAvatarUrl    = (v) => { setAvatarUrl(v);       liveUpdate({ avatarUrl: v });    track({ avatarUrl: v }); };
     const handleVariant      = (v) => { setVariant(v);         liveUpdate({ variant: v });      track({ variant: v }); };
     const handlePlacement    = (v) => { setPlacement(v);       liveUpdate({ placement: v });    track({ placement: v }); };
     const handleCollapsible  = (v) => { setCollapsible(v);     liveUpdate({ collapsible: v });  track({ collapsible: v }); };
@@ -279,9 +394,65 @@ export default function WidgetTab({ agent, platformSettings }) {
     const handleTermsEnabled = (v) => { setTermsEnabled(v);    liveUpdate({ termsEnabled: v }); track({ termsEnabled: v }); };
     const handleTermsText    = (v) => { setTermsText(v);       setTouchedTermsText(true); liveUpdate({ termsText: v }); track({ termsText: v }); };
 
-    const handleAvatarFile = (e) => {
+    const handleMainLabel    = (v) => { setMainLabel(v);       liveUpdate({ mainLabel: v }); track({ mainLabel: v }); };
+    const handleStartCall    = (v) => { setStartCall(v);       liveUpdate({ startCall: v }); track({ startCall: v }); };
+
+    const handleStyleBase          = (v) => { setStyleBase(v);          liveUpdate({ styleBase: v });          track({ styleBase: v }); };
+    const handleStyleBaseHover     = (v) => { setStyleBaseHover(v);     liveUpdate({ styleBaseHover: v });     track({ styleBaseHover: v }); };
+    const handleStyleBaseActive    = (v) => { setStyleBaseActive(v);    liveUpdate({ styleBaseActive: v });    track({ styleBaseActive: v }); };
+    const handleStyleBaseBorder    = (v) => { setStyleBaseBorder(v);    liveUpdate({ styleBaseBorder: v });    track({ styleBaseBorder: v }); };
+    const handleStyleBaseSubtle    = (v) => { setStyleBaseSubtle(v);    liveUpdate({ styleBaseSubtle: v });    track({ styleBaseSubtle: v }); };
+    const handleStyleBasePrimary   = (v) => { setStyleBasePrimary(v);   liveUpdate({ styleBasePrimary: v });   track({ styleBasePrimary: v }); };
+    const handleStyleBaseError     = (v) => { setStyleBaseError(v);     liveUpdate({ styleBaseError: v });     track({ styleBaseError: v }); };
+    const handleStyleAccent        = (v) => { setStyleAccent(v);        liveUpdate({ styleAccent: v });        track({ styleAccent: v }); };
+    const handleStyleAccentHover   = (v) => { setStyleAccentHover(v);   liveUpdate({ styleAccentHover: v });   track({ styleAccentHover: v }); };
+    const handleStyleAccentActive  = (v) => { setStyleAccentActive(v);  liveUpdate({ styleAccentActive: v });  track({ styleAccentActive: v }); };
+    const handleStyleAccentBorder  = (v) => { setStyleAccentBorder(v);  liveUpdate({ styleAccentBorder: v });  track({ styleAccentBorder: v }); };
+    const handleStyleAccentSubtle  = (v) => { setStyleAccentSubtle(v);  liveUpdate({ styleAccentSubtle: v });  track({ styleAccentSubtle: v }); };
+    const handleStyleAccentPrimary = (v) => { setStyleAccentPrimary(v); liveUpdate({ styleAccentPrimary: v }); track({ styleAccentPrimary: v }); };
+
+    const handleAvatarFile = async (e) => {
+
         const file = e.target.files?.[0];
-        if (file) handleAvatarUrl(URL.createObjectURL(file));
+
+        if (!file) return;
+
+        // Validate type
+        if (!file.type.startsWith('image/')) {
+            setAvatarUploadError('Only image files are allowed.');
+            return;
+        }
+        // Validate size (2MB)
+        if (file.size > 2 * 1024 * 1024) {
+            setAvatarUploadError('File size must be under 2MB.');
+            return;
+        }
+
+        setAvatarUploadError(null);
+        setAvatarUploading(true);
+
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('agent_id', agent?.agent_id);
+
+            const { data } = await axios.post('/app/add-avatar-image',formData);
+
+            const url = data.avatar_url;
+
+            console.log(data)
+
+            handleAvatarUrl(url);
+
+        } catch (err) {
+
+            console.log(err)
+
+            setAvatarUploadError(err?.response?.data?.message || 'Upload failed. Please try again.');
+        } finally {
+            setAvatarUploading(false);
+            if (fileInputRef.current) fileInputRef.current.value = '';
+        }
     };
 
     useEffect(() => {
@@ -321,7 +492,6 @@ export default function WidgetTab({ agent, platformSettings }) {
                         <SegmentedControl
                             options={[
                                 { label: 'Orb',   value: 'orb' },
-                                { label: 'Link',  value: 'link' },
                                 { label: 'Image', value: 'image' },
                             ]}
                             value={avatarType}
@@ -345,56 +515,75 @@ export default function WidgetTab({ agent, platformSettings }) {
                     {avatarType === 'image' && (
                         <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 space-y-3">
                             <div className="flex items-center gap-4">
+                                {/* Preview */}
                                 {avatarUrl ? (
-                                    <img src={avatarUrl} alt="Avatar" className="h-14 w-14 rounded-full object-cover border border-gray-200" />
+                                    <img src={avatarUrl} alt="Avatar" className="h-14 w-14 rounded-full object-cover border border-gray-200 shrink-0" />
                                 ) : (
-                                    <div className={`h-14 w-14 rounded-full flex items-center justify-center border ${touchedAvatarUrl && avatarUrlError ? 'border-red-300 bg-red-50' : 'border-gray-300 bg-gray-200'}`}>
-                                        <svg className="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
-                                        </svg>
+                                    <div className={`h-14 w-14 rounded-full shrink-0 flex items-center justify-center border ${avatarUploadError ? 'border-red-300 bg-red-50' : 'border-gray-300 bg-gray-200'}`}>
+                                        {avatarUploading ? (
+                                            <svg className="h-5 w-5 text-gray-400 animate-spin" fill="none" viewBox="0 0 24 24">
+                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                                            </svg>
+                                        ) : (
+                                            <svg className="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                                            </svg>
+                                        )}
                                     </div>
                                 )}
+
                                 <div className="flex-1 space-y-2">
-                                    <button
-                                        type="button"
-                                        onClick={() => { setTouchedAvatarUrl(true); fileInputRef.current?.click(); }}
-                                        className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-                                    >
-                                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
-                                        </svg>
-                                        Upload image
-                                    </button>
-                                    <input ref={fileInputRef} type="file" accept="image/*" className="sr-only" onChange={handleAvatarFile} />
-                                    <p className="text-xs text-gray-400">PNG, JPG or GIF up to 2MB</p>
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            type="button"
+                                            disabled={avatarUploading}
+                                            onClick={() => { setAvatarUploadError(null); fileInputRef.current?.click(); }}
+                                            className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            {avatarUploading ? (
+                                                <>
+                                                    <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                                                    </svg>
+                                                    Uploading…
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                                                    </svg>
+                                                    {avatarUrl ? 'Replace image' : 'Upload image'}
+                                                </>
+                                            )}
+                                        </button>
+                                        {avatarUrl && !avatarUploading && (
+                                            <button
+                                                type="button"
+                                                onClick={() => { handleAvatarUrl(''); setAvatarUploadError(null); }}
+                                                className="text-xs text-gray-400 hover:text-red-500 transition-colors"
+                                            >
+                                                Remove
+                                            </button>
+                                        )}
+                                    </div>
+                                    <input
+                                        ref={fileInputRef}
+                                        type="file"
+                                        accept="image/*"
+                                        className="sr-only"
+                                        onChange={handleAvatarFile}
+                                    />
+                                    <p className="text-xs text-gray-400">PNG, JPG or GIF · Max 2MB</p>
                                 </div>
                             </div>
-                            {touchedAvatarUrl && <FieldError message={avatarUrlError} />}
+                            {avatarUploadError && <FieldError message={avatarUploadError} />}
                         </div>
-                    )}
-
-                    {avatarType === 'link' && (
-                        <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
-                            <label className="mb-1.5 block text-xs font-medium text-gray-500">Image URL</label>
-                            <input
-                                type="url"
-                                value={avatarUrl}
-                                onChange={(e) => handleAvatarUrl(e.target.value)}
-                                onBlur={() => setTouchedAvatarUrl(true)}
-                                placeholder="https://example.com/avatar.png"
-                                className={`w-full rounded-lg border bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-1 transition-colors ${
-                                    touchedAvatarUrl && avatarUrlError
-                                        ? 'border-red-300 focus:border-red-400 focus:ring-red-200'
-                                        : 'border-gray-200 focus:border-gray-400 focus:ring-gray-300'
-                                }`}
-                            />
-                            {touchedAvatarUrl && <FieldError message={avatarUrlError} />}
-                        </div>
-                    )}
+                    )} 
                 </div>
             </SectionRow>
 
-            {/* ── Styling ── */}
             <SectionRow title="Styling" description="Customize the colors and shape of the widget to best fit your website.">
                 <div className="space-y-5">
                     <div>
@@ -429,6 +618,37 @@ export default function WidgetTab({ agent, platformSettings }) {
                                 { label: 'Bottom-right', value: 'bottom-right' },
                             ]}
                         />
+                    </div>
+
+                    {/* ── Color styles ── */}
+                    <div>
+                        <p className="mb-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Colors</p>
+                        <div className="space-y-2">
+                            {[
+                                { label: 'Base',           desc: 'Base background color',                         value: styleBase,          onChange: handleStyleBase },
+                                { label: 'Base Hover',     desc: 'Base background when hovered',                  value: styleBaseHover,     onChange: handleStyleBaseHover },
+                                { label: 'Base Active',    desc: 'Base background when clicked',                  value: styleBaseActive,    onChange: handleStyleBaseActive },
+                                { label: 'Base Border',    desc: 'Border color against the base background',      value: styleBaseBorder,    onChange: handleStyleBaseBorder },
+                                { label: 'Base Subtle',    desc: 'Subtle text color against the base background', value: styleBaseSubtle,    onChange: handleStyleBaseSubtle },
+                                { label: 'Base Primary',   desc: 'Primary color against the base background',     value: styleBasePrimary,   onChange: handleStyleBasePrimary },
+                                { label: 'Base Error',     desc: 'Error text color against the base background',  value: styleBaseError,     onChange: handleStyleBaseError },
+                                { label: 'Accent',         desc: 'Accent background color',                       value: styleAccent,        onChange: handleStyleAccent },
+                                { label: 'Accent Hover',   desc: 'Accent background when hovered',                value: styleAccentHover,   onChange: handleStyleAccentHover },
+                                { label: 'Accent Active',  desc: 'Accent background when clicked',                value: styleAccentActive,  onChange: handleStyleAccentActive },
+                                { label: 'Accent Border',  desc: 'Border color against the accent background',    value: styleAccentBorder,  onChange: handleStyleAccentBorder },
+                                { label: 'Accent Subtle',  desc: 'Subtle text color against the accent background', value: styleAccentSubtle, onChange: handleStyleAccentSubtle },
+                                { label: 'Accent Primary', desc: 'Primary text color against the accent background', value: styleAccentPrimary, onChange: handleStyleAccentPrimary },
+                            ].map(({ label, desc, value, onChange }) => (
+                                <StyleColorRow
+                                    key={label}
+                                    label={label}
+                                    description={desc}
+                                    value={value}
+                                    onChange={onChange}
+                                />
+                            ))
+                         }
+                        </div>
                     </div>
                 </div>
             </SectionRow>
@@ -467,13 +687,36 @@ export default function WidgetTab({ agent, platformSettings }) {
                     )}
                 </div>
             </SectionRow>
+
+            <SectionRow title="Text contents" description="Modify the text contents shown in the widget interface.">
+                <div className="space-y-3">
+                    {[
+                        { key: 'main_label', label: 'main_label', value: mainLabel, handler: handleMainLabel, placeholder: 'Need help?' },
+                        { key: 'start_call', label: 'start_call', value: startCall, handler: handleStartCall, placeholder: 'Start a call' },
+                    ].map(({ key, label, value, handler, placeholder }) => (
+                        <div key={key} className="flex items-center gap-6">
+                            <span className="w-28 shrink-0 text-right text-sm font-semibold text-gray-700 decoration-dotted">{label}</span>
+                            <input
+                                type="text"
+                                value={value}
+                                onChange={(e) => handler(e.target.value)}
+                                placeholder={placeholder}
+                                className="flex-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-300 transition-colors"
+                            />
+                        </div>
+                    ))}
+                </div>
+            </SectionRow>
+
             {
                 config && agentId && (
 
                     <ElevenLabsWidget />
+
                 )
 
             }
+
         </div>
     );
 }

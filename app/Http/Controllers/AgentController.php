@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
+use GuzzleHttp\Exception\RequestException;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -173,6 +174,89 @@ class AgentController extends Controller
        }
 
        
+    }
+
+    public function addAvatarImage(Request $request)
+    {
+        $request->validate([
+            'file'     => 'required|file|mimes:jpg,jpeg,png|max:2048',
+            'agent_id' => 'required|string',
+        ]);
+        
+    
+        $agentId = $request->input('agent_id');
+        $file = $request->file('file');
+
+        logger()->info("upload request", [
+            'agent_id' => $agentId,
+        ]);
+
+        logger()->info('file details', [
+            'original_name' => $file->getClientOriginalName(),
+            'mime_type'     => $file->getMimeType(),
+            'size_bytes'    => $file->getSize(),
+            'path'          => $file->getRealPath(),
+        ]);
+    
+        $client = new Client();
+    
+        try {
+
+            $response = $client->request('POST', "https://api.elevenlabs.io/v1/convai/agents/{$agentId}/avatar", [
+                'headers' => [
+                    'xi-api-key' => env('ELEVEN_LABS_KEY'),
+                ],
+                'multipart' => [
+                    [
+                        'name'     => 'avatar_file',
+                        'filename' => $file->getClientOriginalName(),
+                        'contents' => fopen($file->getRealPath(), 'r'), 
+                    ],
+                ],
+            ]);
+    
+            $body = json_decode($response->getBody(), true);
+
+            logger()->info('url', [
+                'avatar_url'  => $body['avatar_url'] ?? null,
+            ]);
+    
+            return response()->json([
+                'success'     => true,
+                'avatar_url'  => $body['avatar_url'] ?? null,
+                'raw'         => $body,
+            ], 200);
+    
+        } catch (RequestException $e) {
+    
+            $errorBody = null;
+    
+            if ($e->hasResponse()) {
+                $errorBody = json_decode($e->getResponse()->getBody(), true);
+            }
+
+            logger()->info("upload request", [
+                'message' => $errorBody ?? $e->getMessage(),
+            ]);
+    
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to upload avatar to ElevenLabs',
+                'error'   => $errorBody ?? $e->getMessage(),
+            ], $e->getCode() ?: 500);
+    
+        } catch (\Exception $e) {
+
+            logger()->info("upload request", [
+                'message' => $e->getMessage(),
+            ]);
+    
+            return response()->json([
+                'success' => false,
+                'message' => 'Unexpected server error',
+                'error'   => $e->getMessage(),
+            ], 500);
+        }
     }
 
 }

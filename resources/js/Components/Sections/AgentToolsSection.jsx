@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect,useRef } from 'react';
 import { Plus, Wrench, Settings, X, Trash2 } from 'lucide-react';
 import { useAgentChanges } from '@/Contexts/AgentChangesContext';
 import axios from 'axios';
@@ -129,6 +129,17 @@ function Field({ label, hint, required, children }) {
         </div>
     );
 }
+
+function Spinner({ size = 16 }) {
+    return (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+        style={{ animation: "spin 0.7s linear infinite", flexShrink: 0 }}>
+        <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+        <circle cx="12" cy="12" r="10" stroke="#d1d5db" strokeWidth="3" />
+        <path d="M12 2a10 10 0 0 1 10 10" stroke="#6b7280" strokeWidth="3" strokeLinecap="round" />
+      </svg>
+    );
+  }
 
 function Input({ value, onChange, placeholder, type = 'text' }) {
     return (
@@ -726,7 +737,7 @@ function ParamRow({ param, onChange, onDelete }) {
     );
 }
 
-function HeaderRow({ header, onChange, onDelete, secrets }) {
+function HeaderRow({ header, onChange, onDelete, secrets, onOpenSecretDrawer  }) {
     return (
         <div className="rounded-xl border border-gray-200 bg-white p-4 space-y-3">
             <div className="grid grid-cols-2 gap-3">
@@ -747,14 +758,12 @@ function HeaderRow({ header, onChange, onDelete, secrets }) {
 
             {header.header_type === 'secret' ? (
                 <Field label="Secret">
-                    <Select
+                     <SecretSelect
                         value={header.secret_id}
-                        onChange={v => onChange({ ...header, secret_id: v })}
-                        options={[
-                            { value: '', label: 'Select a secret…' },
-                            ...(secrets ?? []).map(s => ({ value: s.id, label: s.name })),
-                        ]}
-                    />
+                        onChange={(v) => onChange({ ...header, secret_id: v })}
+                        secrets={secrets}
+                        onCreateNew={onOpenSecretDrawer}
+                     />
                 </Field>
             ) : (
                 <Field label="Value">
@@ -768,6 +777,212 @@ function HeaderRow({ header, onChange, onDelete, secrets }) {
                 </button>
             </div>
         </div>
+    );
+}
+
+function SecretSelect({ value, onChange, secrets, onCreateNew }) {
+    const [open, setOpen] = useState(false);
+    const ref = useRef(null);
+  
+    // close on outside click
+    useEffect(() => {
+      function handler(e) {
+        if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+      }
+      document.addEventListener("mousedown", handler);
+      return () => document.removeEventListener("mousedown", handler);
+    }, []);
+  
+    const selected = secrets.find((s) => s.secret_id === value);
+  
+    return (
+      <div ref={ref} className="relative">
+        {/* Trigger */}
+        <button
+          type="button"
+          onClick={() => setOpen((o) => !o)}
+          className="w-full flex items-center justify-between rounded border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-gray-500 focus:outline-none focus:ring-1 focus:ring-gray-400 transition-colors"
+        >
+          <span className={selected ? "text-gray-900" : "text-gray-400"}>
+            {selected ? selected.name : "Select a secret…"}
+          </span>
+          <svg
+            width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+            className={`text-gray-400 transition-transform ${open ? "rotate-180" : ""}`}
+          >
+            <polyline points="6 9 12 15 18 9" />
+          </svg>
+        </button>
+  
+        {/* Dropdown */}
+        {open && (
+          <div className="absolute z-30 mt-1 w-full rounded border border-gray-200 bg-white shadow-lg overflow-hidden">
+            {secrets.length === 0 && (
+              <p className="px-3 py-2 text-xs text-gray-400">No secrets yet.</p>
+            )}
+            {secrets.map((s) => (
+              <button
+                key={s.id}
+                type="button"
+                onClick={() => { onChange(s.secret_id); setOpen(false); }}
+                className="flex w-full items-center justify-between px-3 py-2 text-sm text-gray-800 hover:bg-gray-50 transition-colors"
+              >
+                {s.name}
+                {s.id === value && (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-gray-700">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                )}
+              </button>
+            ))}
+  
+            {/* Divider + create action */}
+            <div className="border-t border-gray-100">
+              <button
+                type="button"
+                onClick={() => { setOpen(false); onCreateNew(); }}
+                className="flex w-full items-center justify-center gap-1.5 px-3 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                  strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="12" y1="8" x2="12" y2="16" />
+                  <line x1="8" y1="12" x2="16" y2="12" />
+                </svg>
+                Create new secret
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+function SecretDrawer({ open, onClose, onCreated }) {
+
+    const [name, setName]       = useState("");
+    const [value, setValue]     = useState("");
+    const [saving, setSaving]   = useState(false);
+    const [error, setError]     = useState("");
+  
+    // reset on open
+    useEffect(() => {
+      if (open) { setName(""); setValue(""); setError(""); }
+    }, [open]);
+  
+    async function handleAdd() {
+      if (!name.trim() || !value.trim()) {
+        setError("Both name and value are required.");
+        return;
+      }
+      setError("");
+      setSaving(true);
+      try {
+        const res = await axios.post("/app/create-secret", {
+          name: name.trim(),
+          value: value.trim(),
+        });
+        const created = res.data?.secret ?? { id: res.data?.id, name: name.trim() };
+        onCreated(created);
+        onClose();
+      } catch {
+        setError("Failed to create secret. Please try again.");
+      } finally {
+        setSaving(false);
+      }
+    }
+  
+    return (
+      <>
+        {/* Backdrop */}
+        <div
+          className="fixed inset-0 z-40 transition-opacity duration-200"
+          style={{
+            background: "rgba(0,0,0,0.3)",
+            backdropFilter: "blur(1px)",
+            opacity: open ? 1 : 0,
+            pointerEvents: open ? "auto" : "none",
+          }}
+          onClick={onClose}
+        />
+  
+        {/* Drawer panel */}
+        <div
+          className="fixed top-0 right-0 z-50 h-full w-full max-w-md bg-white shadow-2xl flex flex-col transition-transform duration-300 ease-in-out"
+          style={{ transform: open ? "translateX(0)" : "translateX(100%)" }}
+        >
+          {/* Header */}
+          <div className="flex items-start gap-3 px-6 py-5 border-b border-gray-100">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded border border-gray-200 bg-gray-50 text-gray-500">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+              </svg>
+            </div>
+            <div className="flex-1 min-w-0">
+              <h2 className="text-sm font-semibold text-gray-900">Add secret</h2>
+              <p className="mt-0.5 text-xs text-gray-500 leading-relaxed">
+                Securely store a value that can be used by the tools. Once added the value cannot
+                be retrieved.
+              </p>
+            </div>
+            <button
+              onClick={onClose}
+              className="shrink-0 text-gray-400 hover:text-gray-600 text-lg leading-none mt-0.5"
+            >
+              ×
+            </button>
+          </div>
+  
+          {/* Body */}
+          <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
+            <Field label="Name">
+              <Input
+                value={name}
+                onChange={setName}
+                placeholder="e.g. API_KEY"
+              />
+            </Field>
+  
+            <Field label="Value">
+              <textarea
+                value={value}
+                onChange={(e) => setValue(e.target.value)}
+                placeholder="Secret value…"
+                rows={10}
+                className="w-full rounded border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-500 focus:outline-none focus:ring-1 focus:ring-gray-400 transition-colors resize-none font-mono"
+              />
+            </Field>
+  
+            {error && (
+              <p className="text-xs text-red-500 rounded border border-red-100 bg-red-50 px-3 py-2">
+                {error}
+              </p>
+            )}
+          </div>
+  
+          {/* Footer */}
+          <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-gray-100">
+            <button
+              onClick={onClose}
+              className="rounded border border-gray-200 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleAdd}
+              disabled={saving || !name.trim() || !value.trim()}
+              className="flex items-center gap-2 rounded bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              {saving && <Spinner size={13} />}
+              {saving ? "Adding…" : "Add secret"}
+            </button>
+          </div>
+        </div>
+      </>
     );
 }
 
@@ -792,12 +1007,17 @@ function SectionBlock({ title, hint, actionLabel, onAdd, children }) {
 }
 
 function AddToolDrawer({ onClose, onSave }) {
+
     const [tool, setTool]       = useState(BLANK_TOOL);
     const [secrets, setSecrets] = useState([]);
 
+    const [secretDrawerOpen, setSecretDrawerOpen]  = useState(false);
+    const pendingHeaderIdx = useRef(null);
+
+
     // Fetch workspace secrets for header dropdowns
     useEffect(() => {
-        axios.get('/get-secrets').then(res => {
+        axios.get('/app/get-secrets').then(res => {
             const list = Array.isArray(res.data) ? res.data : (res.data?.secrets ?? []);
             setSecrets(list);
         }).catch(() => {});
@@ -825,15 +1045,32 @@ function AddToolDrawer({ onClose, onSave }) {
 
     const showBody = BODY_METHODS.has(tool.api_schema.method);
 
+    function openDrawerForHeader(idx) {
+        pendingHeaderIdx.current = idx;
+        setSecretDrawerOpen(true);
+    }
+    
+    function handleSecretCreated(newSecret) {
+        // add to local list
+        setSecrets((prev) => [...prev, newSecret]);
+        // auto-select on the row that triggered the drawer
+        const idx = pendingHeaderIdx.current;
+        if (idx !== null) {
+          updateHeader(idx, { secret_id: newSecret.secret_id });
+          pendingHeaderIdx.current = null;
+        }
+      }
+    
     const handleSave = () => {
         onSave(serializeTool(tool));
         onClose();
     };
 
+
     return (
         <>
             <div className="fixed inset-0 z-40 bg-black/20 backdrop-blur-[1px]" onClick={onClose} />
-            <div className="fixed right-0 top-0 z-50 flex h-full w-[520px] flex-col border-l border-gray-200 bg-white shadow-2xl">
+             <div className="fixed right-0 top-0 z-50 flex h-full w-[520px] flex-col border-l border-gray-200 bg-white shadow-2xl">
 
                 {/* Header */}
                 <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
@@ -971,9 +1208,17 @@ function AddToolDrawer({ onClose, onSave }) {
                                 secrets={secrets}
                                 onChange={patch => updateHeader(i, patch)}
                                 onDelete={() => removeHeader(i)}
+                                onOpenSecretDrawer={() => openDrawerForHeader(i)}
+
                             />
                         ))}
                     </SectionBlock>
+
+                    <SecretDrawer
+                        open={secretDrawerOpen}
+                        onClose={() => setSecretDrawerOpen(false)}
+                        onCreated={handleSecretCreated}
+                    />
 
                     {/* ── Query params ── */}
                     <SectionBlock
@@ -1061,7 +1306,9 @@ const INITIAL_BUILT_IN_TOOLS = {
 };
 
 export default function AgentToolsSection({ config, agentId }) {
+
     const { trackChange } = useAgentChanges();
+
     const [activeToolTab, setActiveToolTab] = useState('tools');
 
     const builtInTools = config?.agent?.prompt?.built_in_tools || INITIAL_BUILT_IN_TOOLS;
@@ -1127,7 +1374,7 @@ export default function AgentToolsSection({ config, agentId }) {
             const savedTool = res.data;
             const newToolId = savedTool.toolId;
 
-            // Append full tool detail to local list
+             
             setCustomTools(prev => [...prev, savedTool]);
 
             // Update tool_ids and track
@@ -1326,6 +1573,8 @@ export default function AgentToolsSection({ config, agentId }) {
                     onSave={handleAddToolSave}
                 />
             )}
+
+
         </>
     );
 }

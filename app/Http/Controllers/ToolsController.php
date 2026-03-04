@@ -64,8 +64,9 @@ class ToolsController extends Controller
 
          return response()->json([
 
-            'toolId' => $tool->tool_id
-
+            'toolId' => $tool->tool_id,
+            'data' => $tool
+            
          ]);
 
     }
