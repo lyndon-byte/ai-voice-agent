@@ -51,7 +51,10 @@ Route::middleware(['auth','verified'])->group(function () {
     Route::post('/check-job',[JobTrackerController::class, 'checkJob']);
 
     Route::post('/app/save-tool',[ToolsController::class, 'store']);
+    Route::post('/app/update-tool',[ToolsController::class, 'update']);
     Route::get('/app/get-tools',[ToolsController::class, 'getTools']);
+    Route::get('/app/get-tool-details',[ToolsController::class, 'getToolDetails']);
+
 
     Route::get('/app/get-conversations',[AnalysisController::class, 'getConversations']);
     Route::get('/app/get-conversation-details',[AnalysisController::class, 'getConversationDetails']);
