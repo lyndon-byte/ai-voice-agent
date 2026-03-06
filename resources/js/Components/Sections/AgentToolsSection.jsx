@@ -1343,34 +1343,6 @@ export default function AgentToolsSection({ config, agentId }) {
                         </button>
                     </div>
 
-                    <div className="mb-4 flex items-center gap-1">
-                        {['tools', 'mcp'].map(t => (
-                            <button
-                                key={t}
-                                onClick={() => setActiveToolTab(t)}
-                                className={`rounded-lg px-3 py-1.5 text-sm font-medium capitalize transition-all ${activeToolTab === t ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}
-                            >
-                                {t.toUpperCase()}
-                            </button>
-                        ))}
-                    </div>
-
-                    <div className="relative mb-3">
-                        <svg className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
-                        <input
-                            type="text"
-                            placeholder="Search tools..."
-                            className="w-full rounded-lg border border-gray-300 bg-white py-2 pl-9 pr-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-300"
-                        />
-                    </div>
-
-                    <div className="mb-3">
-                        <button className="flex items-center gap-1 rounded-md border border-gray-300 bg-white px-2.5 py-1 text-xs text-gray-600 hover:bg-gray-50">
-                            <Plus className="h-3 w-3" /> Type
-                        </button>
-                    </div>
 
                     {toolsLoading ? (
                         <div className="flex items-center justify-center gap-2 rounded-xl border border-gray-200 bg-gray-50 py-12">
