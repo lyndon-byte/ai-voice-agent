@@ -3,7 +3,7 @@ import { AlertCircle } from 'lucide-react';
 import { useAgentChanges } from '@/Contexts/Agentchangescontext';
 import ViewChangesModal from './Modals/Viewchangesmodal';
 
-export default function UnsavedChangesBar({ agentId, onSaveSuccess }) {
+export default function UnsavedChangesBar({ agentId, onSaveSuccess, onClearChanges }) {
     
     const { hasChanges, saving, clearChanges, saveChanges, changes } = useAgentChanges();
     const [showViewChanges, setShowViewChanges] = useState(false);
@@ -24,7 +24,9 @@ export default function UnsavedChangesBar({ agentId, onSaveSuccess }) {
 
     const handleClear = () => {
         if (confirm('Are you sure you want to discard all unsaved changes?')) {
+
             clearChanges();
+            onClearChanges()
         }
     };
 

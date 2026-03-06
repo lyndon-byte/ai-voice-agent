@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { MessageSquare } from 'lucide-react';
 import ModernField from '../shared/ModernField';
 import TimezoneModal from '../modals/TimezoneModal';
@@ -6,28 +6,207 @@ import LanguageModal from '../modals/LanguageModal';
 import VoiceDrawer from '../modals/VoiceDrawer';
 import { useAgentChanges } from '@/Contexts/Agentchangescontext';
 
-export default function ConfigurationTab({ agent, config, currentVoice }) {
+// ─── System variables list ────────────────────────────────────────────────────
+const SYSTEM_VARIABLES = [
+    'system__agent_id',
+    'system__current_agent_id',
+    'system__caller_id',
+    'system__called_number',
+    'system__call_duration_secs',
+    'system__time_utc',
+    'system__time',
+    'system__timezone',
+    'system__conversation_id',
+    'system__call_sid',
+    'system__agent_turns',
+    'system__current_agent_turns',
+    'system__current_subagent_turns',
+];
+
+// ─── Variable Dropdown ────────────────────────────────────────────────────────
+function VariableDropdown({ position, onSelect, filter }) {
+    const filtered = filter
+        ? SYSTEM_VARIABLES.filter((v) => v.includes(filter.toLowerCase()))
+        : SYSTEM_VARIABLES;
+
+    if (!filtered.length) return null;
+
+    return (
+        <div
+            className="absolute z-50 min-w-[260px] rounded-lg border border-gray-200 bg-white shadow-lg py-1"
+            style={{ top: position.top, left: position.left }}
+        >
+            <p className="px-3 pt-1 pb-1.5 text-[10px] font-semibold uppercase tracking-wider text-gray-400">
+                System variables
+            </p>
+            {filtered.map((variable) => (
+                <button
+                    key={variable}
+                    onMouseDown={(e) => {
+                        e.preventDefault(); // prevent textarea blur
+                        onSelect(variable);
+                    }}
+                    className="flex w-full items-center px-3 py-1.5 text-left text-sm text-gray-800 hover:bg-gray-50 first:rounded-t-lg last:rounded-b-lg focus:bg-gray-50 focus:outline-none"
+                >
+                    {variable}
+                </button>
+            ))}
+        </div>
+    );
+}
+
+// ─── Variable-aware Textarea ──────────────────────────────────────────────────
+function VariableTextarea({ defaultValue, rows, onChange, placeholder, className }) {
+    const textareaRef = useRef(null);
+    const wrapperRef = useRef(null);
+    const [value, setValue] = useState(defaultValue || '');
+    const [dropdown, setDropdown] = useState(null); // { top, left, triggerIndex }
+
+    // Find the `{{` trigger just before the cursor
+    const findTrigger = (text, cursorPos) => {
+        // Look backwards from cursor for `{{`
+        const before = text.slice(0, cursorPos);
+        const lastOpen = before.lastIndexOf('{{');
+        if (lastOpen === -1) return null;
+        // Make sure there's no closing `}}` after the last `{{`
+        const afterOpen = before.slice(lastOpen + 2);
+        if (afterOpen.includes('}}')) return null;
+        return { triggerIndex: lastOpen, query: afterOpen };
+    };
+
+    const getCaretCoordinates = (textarea, position) => {
+        // Create a mirror div to measure caret position
+        const mirror = document.createElement('div');
+        const style = window.getComputedStyle(textarea);
+        const props = [
+            'boxSizing', 'width', 'height', 'overflowX', 'overflowY',
+            'borderTopWidth', 'borderRightWidth', 'borderBottomWidth', 'borderLeftWidth',
+            'paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft',
+            'fontStyle', 'fontVariant', 'fontWeight', 'fontStretch',
+            'fontSize', 'fontSizeAdjust', 'lineHeight', 'fontFamily',
+            'textAlign', 'textTransform', 'textIndent', 'textDecoration',
+            'letterSpacing', 'wordSpacing', 'tabSize',
+        ];
+        mirror.style.position = 'absolute';
+        mirror.style.visibility = 'hidden';
+        mirror.style.whiteSpace = 'pre-wrap';
+        mirror.style.wordWrap = 'break-word';
+        props.forEach((prop) => {
+            mirror.style[prop] = style[prop];
+        });
+        mirror.textContent = textarea.value.slice(0, position);
+        const span = document.createElement('span');
+        span.textContent = '|';
+        mirror.appendChild(span);
+        document.body.appendChild(mirror);
+        const rect = textarea.getBoundingClientRect();
+        const spanRect = span.getBoundingClientRect();
+        const mirrorRect = mirror.getBoundingClientRect();
+        document.body.removeChild(mirror);
+        return {
+            top: spanRect.top - mirrorRect.top,
+            left: spanRect.left - mirrorRect.left,
+        };
+    };
+
+    const handleChange = (e) => {
+        const newValue = e.target.value;
+        setValue(newValue);
+        onChange?.(e);
+
+        const cursor = e.target.selectionStart;
+        const trigger = findTrigger(newValue, cursor);
+
+        if (trigger) {
+            // Calculate dropdown position relative to wrapper
+            const textarea = textareaRef.current;
+            const caret = getCaretCoordinates(textarea, trigger.triggerIndex);
+            const lineHeight = parseInt(window.getComputedStyle(textarea).lineHeight) || 20;
+            setDropdown({
+                top: caret.top + lineHeight + parseInt(window.getComputedStyle(textarea).paddingTop),
+                left: caret.left + parseInt(window.getComputedStyle(textarea).paddingLeft),
+                triggerIndex: trigger.triggerIndex,
+                query: trigger.query,
+            });
+        } else {
+            setDropdown(null);
+        }
+    };
+
+    const handleKeyDown = (e) => {
+        if (e.key === 'Escape' && dropdown) {
+            setDropdown(null);
+        }
+    };
+
+    const handleBlur = () => {
+        // Small delay so onMouseDown on dropdown item fires first
+        setTimeout(() => setDropdown(null), 150);
+    };
+
+    const handleSelect = (variable) => {
+        if (!textareaRef.current || dropdown === null) return;
+        const textarea = textareaRef.current;
+        const before = value.slice(0, dropdown.triggerIndex);
+        const after = value.slice(textarea.selectionStart);
+        const inserted = `{{${variable}}}`;
+        const newValue = before + inserted + after;
+        setValue(newValue);
+        onChange?.({ target: { value: newValue } });
+        setDropdown(null);
+        // Restore focus + move cursor after inserted text
+        setTimeout(() => {
+            textarea.focus();
+            const newCursor = before.length + inserted.length;
+            textarea.setSelectionRange(newCursor, newCursor);
+        }, 0);
+    };
+
+    return (
+        <div ref={wrapperRef} className="relative">
+            <textarea
+                ref={textareaRef}
+                value={value}
+                rows={rows}
+                onChange={handleChange}
+                onKeyDown={handleKeyDown}
+                onBlur={handleBlur}
+                className={className}
+                placeholder={placeholder}
+            />
+            {dropdown && (
+                <VariableDropdown
+                    position={{ top: dropdown.top, left: dropdown.left }}
+                    onSelect={handleSelect}
+                    filter={dropdown.query}
+                />
+            )}
+        </div>
+    );
+}
+
+// ─── Main Component ───────────────────────────────────────────────────────────
+export default function ConfigurationTab({ config, currentVoice }) {
     const { trackChange } = useAgentChanges();
-    
+
     const [selectedTimezone, setSelectedTimezone] = useState(config?.agent?.prompt?.timezone || null);
     const [showTimezoneModal, setShowTimezoneModal] = useState(false);
-    
+
     const [defaultPersonalityEnabled, setDefaultPersonalityEnabled] = useState(
         !config?.agent?.prompt?.ignore_default_personality
     );
     const [interruptibleEnabled, setInterruptibleEnabled] = useState(
         !config?.agent?.disable_first_message_interruptions
     );
-    
+
     const [selectedLanguage, setSelectedLanguage] = useState(config?.agent?.language || 'en');
     const [showLanguageModal, setShowLanguageModal] = useState(false);
-    
+
     const [selectedVoice, setSelectedVoice] = useState(
         { voice_id: null, name: currentVoice.name }
     );
     const [showVoiceDrawer, setShowVoiceDrawer] = useState(false);
 
-    // Handlers with change tracking
     const handleTimezoneChange = (tz) => {
         setSelectedTimezone(tz);
         trackChange('agent.prompt.timezone', tz);
@@ -36,13 +215,11 @@ export default function ConfigurationTab({ agent, config, currentVoice }) {
 
     const handleDefaultPersonalityToggle = (checked) => {
         setDefaultPersonalityEnabled(checked);
-        // Note: storing the UI state, will be inverted when mapping to API
         trackChange('agent.prompt.ignore_default_personality', checked);
     };
 
     const handleInterruptibleToggle = (checked) => {
         setInterruptibleEnabled(checked);
-        // Note: storing the UI state, will be inverted when mapping to API
         trackChange('agent.disable_first_message_interruptions', checked);
     };
 
@@ -62,8 +239,9 @@ export default function ConfigurationTab({ agent, config, currentVoice }) {
     return (
         <>
             <div className="grid gap-6 lg:grid-cols-[1fr,380px]">
-                {/* Left Column - Main Content */}
+                {/* ── Left Column ─────────────────────────────────────────── */}
                 <div className="space-y-6">
+
                     {/* System Prompt */}
                     <div>
                         <div className="mb-2 flex items-center gap-2">
@@ -75,25 +253,25 @@ export default function ConfigurationTab({ agent, config, currentVoice }) {
                             </button>
                         </div>
                         <div className="space-y-2">
-                            <textarea
-                                defaultValue={config?.agent?.prompt?.prompt || "You are a helpful assistant."}
+                            <VariableTextarea
+                                defaultValue={config?.agent?.prompt?.prompt || 'You are a helpful assistant.'}
                                 rows={5}
                                 onChange={(e) => trackChange('agent.prompt.prompt', e.target.value)}
                                 className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm transition-all placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 resize-y"
                                 placeholder="You are a helpful assistant..."
                             />
-                            <div className="flex items-center justify-between rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">
+                            <div className="flex items-center justify-between rounded-lg border border-gray-200 bg-gray-50 px-3 py-1">
                                 <span className="text-xs text-gray-600">
-                                    Type <code className="rounded bg-gray-200 px-1 py-0.5 font-mono text-xs">{'{{ }}'}</code> to add variables
+                                    Type <code className="rounded bg-gray-200 px-1 py-0.5 font-mono text-xs">{'{{'}</code> to add variables
                                 </span>
                                 <div className="flex items-center gap-3">
                                     <label className="flex cursor-pointer items-center gap-2">
                                         <div className="relative">
-                                            <input 
-                                                type="checkbox" 
+                                            <input
+                                                type="checkbox"
                                                 checked={defaultPersonalityEnabled}
                                                 onChange={(e) => handleDefaultPersonalityToggle(e.target.checked)}
-                                                className="sr-only" 
+                                                className="sr-only"
                                             />
                                             <div className={`h-5 w-9 rounded-full transition-all ${defaultPersonalityEnabled ? 'bg-gray-900' : 'bg-gray-300'}`}>
                                                 <div className={`absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-all ${defaultPersonalityEnabled ? 'translate-x-4' : 'translate-x-0'}`}></div>
@@ -101,7 +279,7 @@ export default function ConfigurationTab({ agent, config, currentVoice }) {
                                         </div>
                                         <span className="text-xs text-gray-700">Default personality</span>
                                     </label>
-                                    <button 
+                                    <button
                                         onClick={() => setShowTimezoneModal(true)}
                                         className="flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
                                     >
@@ -121,12 +299,12 @@ export default function ConfigurationTab({ agent, config, currentVoice }) {
                             <h3 className="text-sm font-medium text-gray-900">First message</h3>
                             <p className="mt-0.5 text-xs text-gray-500">
                                 The first message the agent will say. If empty, the agent will wait for the user to start the conversation.{' '}
-                                <a href="#" className="text-blue-600 hover:underline">Disclosure Requirements →</a>
+                              
                             </p>
                         </div>
                         <div className="space-y-2">
-                            <textarea
-                                defaultValue={config?.agent?.first_message || "Hello! How can I help you?"}
+                            <VariableTextarea
+                                defaultValue={config?.agent?.first_message || 'Hello! How can I help you?'}
                                 rows={3}
                                 onChange={(e) => trackChange('agent.first_message', e.target.value)}
                                 className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm transition-all placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 resize-y"
@@ -134,15 +312,15 @@ export default function ConfigurationTab({ agent, config, currentVoice }) {
                             />
                             <div className="flex items-center justify-between rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">
                                 <span className="text-xs text-gray-600">
-                                    Type <code className="rounded bg-gray-200 px-1 py-0.5 font-mono text-xs">{'{{ }}'}</code> to add variables
+                                    Type <code className="rounded bg-gray-200 px-1 py-0.5 font-mono text-xs">{'{{'}</code> to add variables
                                 </span>
                                 <label className="flex cursor-pointer items-center gap-2">
                                     <div className="relative">
-                                        <input 
-                                            type="checkbox" 
+                                        <input
+                                            type="checkbox"
                                             checked={interruptibleEnabled}
                                             onChange={(e) => handleInterruptibleToggle(e.target.checked)}
-                                            className="sr-only" 
+                                            className="sr-only"
                                         />
                                         <div className={`h-5 w-9 rounded-full transition-all ${interruptibleEnabled ? 'bg-gray-900' : 'bg-gray-300'}`}>
                                             <div className={`absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-all ${interruptibleEnabled ? 'translate-x-4' : 'translate-x-0'}`}></div>
@@ -154,66 +332,60 @@ export default function ConfigurationTab({ agent, config, currentVoice }) {
                         </div>
                     </div>
 
-                    {/* Turn Management */}
+                    {/* ── Turn Management (compact) ──────────────────────── */}
                     <div className="rounded-lg border border-gray-200 bg-white p-4">
                         <div className="mb-3 flex items-center gap-2">
                             <MessageSquare className="h-4 w-4 text-gray-600" />
                             <h3 className="text-sm font-semibold text-gray-900">Turn Management</h3>
                         </div>
-                        <ModernField label="Turn Eagerness">
-                            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+                        <ModernField 
+                            label="Turn Eagerness"
+                            subLabel="How quickly the agent responds"
+                        >
+                            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3 mt-2">
                                 <select 
                                     defaultValue={config?.turn?.turn_eagerness}
                                     onChange={(e) => trackChange('turn.turn_eagerness', e.target.value)}
-                                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs text-gray-900 shadow-sm transition-all focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 sm:flex-1 sm:text-sm"
+                                    className="w-full rounded border border-gray-300 bg-white px-3 py-2 text-xs text-gray-900 shadow-sm transition-all focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 sm:flex-1 sm:text-sm"
                                 >
                                     <option value="low">Low</option>
                                     <option value="normal">Normal</option>
                                     <option value="high">High</option>
                                 </select>
-                                <span className="text-xs text-gray-500 sm:flex-1">
-                                    How quickly the agent responds
-                                </span>
+                               
                             </div>
                         </ModernField>
                     </div>
                 </div>
 
-                {/* Right Column - Settings Sidebar */}
-                <div className="space-y-4">
-                    {/* Voices */}
-                    <VoiceSection 
+                {/* ── Right Column ─────────────────────────────────────────── */}
+                {/* mt-0 keeps top of sidebar flush with top of left column */}
+                <div className="space-y-4 mt-7">
+                    <VoiceSection
                         selectedVoice={selectedVoice}
                         onOpenDrawer={() => setShowVoiceDrawer(true)}
                     />
-
-                    {/* Language */}
-                    <LanguageSection 
+                    <LanguageSection
                         selectedLanguage={selectedLanguage}
                         onOpenModal={() => setShowLanguageModal(true)}
                     />
-
-                    {/* LLM */}
-                    <LLMSection />
                 </div>
             </div>
 
             {/* Modals */}
-            <TimezoneModal 
+            <TimezoneModal
                 isOpen={showTimezoneModal}
                 onClose={() => setShowTimezoneModal(false)}
                 onSelect={handleTimezoneChange}
                 currentTimezone={selectedTimezone || config?.agent?.prompt?.timezone}
             />
-            
-            <LanguageModal 
+            <LanguageModal
                 isOpen={showLanguageModal}
                 onClose={() => setShowLanguageModal(false)}
                 onSelect={handleLanguageChange}
                 currentLanguage={selectedLanguage}
             />
-            
-            <VoiceDrawer 
+            <VoiceDrawer
                 isOpen={showVoiceDrawer}
                 onClose={() => setShowVoiceDrawer(false)}
                 onSelect={handleVoiceChange}
@@ -223,17 +395,12 @@ export default function ConfigurationTab({ agent, config, currentVoice }) {
     );
 }
 
-// Sub-components (same as before)
+// ─── Sub-components ───────────────────────────────────────────────────────────
 function VoiceSection({ selectedVoice, onOpenDrawer }) {
     return (
         <div className="rounded-lg border border-gray-200 bg-white p-4">
             <div className="mb-3 flex items-center justify-between">
                 <h3 className="text-sm font-semibold text-gray-900">Voices</h3>
-                <button className="text-gray-400 hover:text-gray-600">
-                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                </button>
             </div>
             <p className="mb-3 text-xs text-gray-500">
                 Select the ElevenLabs voices you want to use for the agent.
@@ -245,11 +412,9 @@ function VoiceSection({ selectedVoice, onOpenDrawer }) {
                 >
                     <div className="flex items-center gap-2">
                         <div className="h-2 w-2 rounded-full bg-green-500"></div>
-                        <div>
-                            <p className="text-xs font-medium text-gray-900">
-                                {selectedVoice?.name || 'Eric - Smooth, Trustworthy'}
-                            </p>
-                        </div>
+                        <p className="text-xs font-medium text-gray-900">
+                            {selectedVoice?.name || 'Eric - Smooth, Trustworthy'}
+                        </p>
                     </div>
                     <div className="flex items-center gap-2">
                         <span className="rounded bg-gray-200 px-2 py-0.5 text-xs font-medium text-gray-700">Primary</span>
@@ -257,12 +422,6 @@ function VoiceSection({ selectedVoice, onOpenDrawer }) {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                         </svg>
                     </div>
-                </button>
-                <button className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-gray-300 bg-white px-3 py-2.5 text-xs font-medium text-gray-600 hover:border-gray-400 hover:bg-gray-50">
-                    <svg className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" />
-                    </svg>
-                    Add additional voice
                 </button>
             </div>
         </div>
@@ -298,29 +457,6 @@ function LanguageSection({ selectedLanguage, onOpenModal }) {
                         </svg>
                     </div>
                 </button>
-                <button className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-gray-300 bg-white px-3 py-2.5 text-xs font-medium text-gray-600 hover:border-gray-400 hover:bg-gray-50">
-                    <svg className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" />
-                    </svg>
-                    Add additional languages
-                </button>
-            </div>
-        </div>
-    );
-}
-
-function LLMSection() {
-    return (
-        <div className="rounded-lg border border-gray-200 bg-white p-4">
-            <h3 className="mb-3 text-sm font-semibold text-gray-900">LLM</h3>
-            <p className="mb-3 text-xs text-gray-500">
-                Select which provider and model to use for the LLM.
-            </p>
-            <div className="flex items-center justify-between rounded-lg border border-gray-200 bg-gray-50 p-3 hover:border-gray-300">
-                <span className="text-xs font-medium text-gray-900">Gemini 2.5 Flash</span>
-                <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
             </div>
         </div>
     );

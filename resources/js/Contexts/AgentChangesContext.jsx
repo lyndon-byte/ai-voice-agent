@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useCallback } from 'react';
+import { useEffect } from 'react';
 import axios from 'axios';
 
 const AgentChangesContext = createContext();
@@ -137,7 +138,8 @@ export function AgentChangesProvider({ children, initialAgent }) {
     }, [trackChange]);
 
     // Clear all changes
-    const clearChanges = useCallback(() => {
+    const clearChanges = useCallback(async () => {
+        await axios.delete('/app/agent-changes/session');
         setChanges({});
         setHasChanges(false);
     }, []);
@@ -282,6 +284,43 @@ export function AgentChangesProvider({ children, initialAgent }) {
         saveChanges,
         mapToAPIFormat
     };
+
+    useEffect(() => {
+
+        const saveSessionChanges = async () => {
+            try {
+                await axios.post('/app/agent-changes/session', {
+                    changes
+                });
+            } catch (err) {
+                console.error("Failed to store session changes", err);
+            }
+    
+        };
+    
+        if (hasChanges) {
+            saveSessionChanges();
+        }
+    
+    }, [changes]);
+
+    useEffect(() => {
+        const loadSessionChanges = async () => {
+            try {
+                const res = await axios.get('/app/agent-changes/session');
+    
+                if (res.data.changes) {
+                    setChanges(res.data.changes);
+                    setHasChanges(Object.keys(res.data.changes).length > 0);
+                }
+            } catch (err) {
+                console.error("Failed to load session changes", err);
+            }
+        };
+    
+        loadSessionChanges();
+
+    }, []);
 
     return (
         <AgentChangesContext.Provider value={value}>

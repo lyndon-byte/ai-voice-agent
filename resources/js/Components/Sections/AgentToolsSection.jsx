@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Plus, Wrench, Settings, X, Trash2 } from 'lucide-react';
 import { useAgentChanges } from '@/Contexts/AgentChangesContext';
 import axios from 'axios';
+import Portal from '../Shared/Portal';
 
 const SYSTEM_TOOLS = [
     { id: 'end_call',               label: 'End conversation' },
@@ -1497,34 +1498,43 @@ export default function AgentToolsSection({ config, agentId }) {
 
             {/* System tool Settings Drawer */}
             {drawerTool && (
-                <SettingsDrawer
-                    tool={drawerTool}
-                    toolConfig={toolConfigs[drawerTool.id]}
-                    onClose={() => { setDrawerTool(null); setDrawerOpenedByToggle(false); }}
-                    onSave={handleSave}
-                    onCancel={handleDrawerCancel}
-                    currentAgentId={agentId}
-                />
+                <Portal>
+                    <SettingsDrawer
+                        tool={drawerTool}
+                        toolConfig={toolConfigs[drawerTool.id]}
+                        onClose={() => { setDrawerTool(null); setDrawerOpenedByToggle(false); }}
+                        onSave={handleSave}
+                        onCancel={handleDrawerCancel}
+                        currentAgentId={agentId}
+                    />
+                </Portal>
             )}
 
             {/* Add Webhook Tool Drawer */}
             {showAddTool && (
-                <AddToolDrawer
-                    mode="add"
-                    onClose={() => setShowAddTool(false)}
-                    onSave={handleAddToolSave}
-                />
+                <Portal>
+                    <AddToolDrawer
+                        mode="add"
+                        onClose={() => setShowAddTool(false)}
+                        onSave={handleAddToolSave}
+                    />
+                </Portal>
             )}
 
             {/* Edit Webhook Tool Drawer — opens after details are fetched */}
             {editingToolId && editingToolData && (
-                <AddToolDrawer
-                    mode="edit"
-                    editToolId={editingToolId}
-                    initialTool={editingToolData}
-                    onClose={() => { setEditingToolId(null); setEditingToolData(null); }}
-                    onUpdate={handleUpdateTool}
-                />
+
+                <Portal>
+
+                    <AddToolDrawer
+                        mode="edit"
+                        editToolId={editingToolId}
+                        initialTool={editingToolData}
+                        onClose={() => { setEditingToolId(null); setEditingToolData(null); }}
+                        onUpdate={handleUpdateTool}
+                    />
+                </Portal>
+
             )}
         </>
     );

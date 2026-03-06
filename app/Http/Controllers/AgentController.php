@@ -64,6 +64,12 @@ class AgentController extends Controller
                         ],
                     ],
                 ],
+                'platform_settings' => [
+                    'widget' => [
+                        'text_input_enabled' => false,
+                        'transcript_enabled' => true
+                    ],
+                ],
             ],
             'headers' => [
                 'xi-api-key' => env('ELEVEN_LABS_KEY'),
@@ -129,7 +135,14 @@ class AgentController extends Controller
 
         $user = auth()->user();
         $org = $user->organization;
+
         $agentId = $request->query('agentId');
+
+        if (!$agentId) {
+            abort(404, 'Agent not found.');
+        }
+
+        $currentTab = $request->query('currentTab') ?? 'configuration';
 
         $knowledgeBase = $org->knowledgeBase()->get();
 
@@ -162,7 +175,8 @@ class AgentController extends Controller
 
                 'agent' => $agent,
                 'currentVoice' => $voice,
-                'localKb' => $knowledgeBase
+                'localKb' => $knowledgeBase,
+                'currentTab' => $currentTab
 
             ]);
 

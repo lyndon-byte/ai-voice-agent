@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AgentChangesController;
 use App\Http\Controllers\AgentController;
 use App\Http\Controllers\AnalysisController;
 use App\Http\Controllers\JobTrackerController;
@@ -38,8 +39,13 @@ Route::middleware(['auth','verified'])->group(function () {
     Route::get('/app/agents/create', [AgentController::class, 'create'])->name('agents.create');
     Route::post('/app/agents/create', [AgentController::class, 'store'])->name('agents.create.store');
     Route::patch('/app/agents/update', [AgentController::class, 'update'])->name('agents.update');
-
     Route::post('/app/add-avatar-image', [AgentController::class, 'addAvatarImage']);
+
+
+    Route::get('/app/agent-changes/session', [AgentChangesController::class, 'get']);
+    Route::post('/app/agent-changes/session', [AgentChangesController::class, 'store']);
+    Route::delete('/app/agent-changes/session', [AgentChangesController::class, 'clear']);
+
 
     Route::get('/app/voices', [VoiceController::class, 'getVoices'])->name('voices');
 
@@ -68,18 +74,22 @@ Route::middleware(['auth','verified'])->group(function () {
 
     Route::get('/test',function(){
 
-        $client = new \GuzzleHttp\Client();
-        $response = $client->request('GET', 'https://api.elevenlabs.io/v1/convai/agents/agent_0001khkj48t8f818stz6zrw03s81',[
+        // $client = new \GuzzleHttp\Client();
+        // $response = $client->request('GET', 'https://api.elevenlabs.io/v1/convai/agents/agent_0001khkj48t8f818stz6zrw03s81',[
 
-            'headers' => [
+        //     'headers' => [
 
-                'xi-api-key' => env('ELEVEN_LABS_KEY'),
-                'Content-Type' => 'application/json'
-            ]
+        //         'xi-api-key' => env('ELEVEN_LABS_KEY'),
+        //         'Content-Type' => 'application/json'
+        //     ]
 
+        // ]);
+
+        // return json_decode($response->getBody()->getContents(),true);
+
+        return response()->json([
+            'changes' => session('agent_changes', [])
         ]);
-
-        return json_decode($response->getBody()->getContents(),true);
 
     });
 });
