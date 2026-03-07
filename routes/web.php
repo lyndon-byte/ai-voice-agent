@@ -39,6 +39,8 @@ Route::middleware(['auth','verified'])->group(function () {
     Route::get('/app/agents/create', [AgentController::class, 'create'])->name('agents.create');
     Route::post('/app/agents/create', [AgentController::class, 'store'])->name('agents.create.store');
     Route::patch('/app/agents/update', [AgentController::class, 'update'])->name('agents.update');
+    Route::post('/app/agents/agent/delete', [AgentController::class, 'destroy'])->name('agent.delete');
+
     Route::post('/app/add-avatar-image', [AgentController::class, 'addAvatarImage']);
 
 

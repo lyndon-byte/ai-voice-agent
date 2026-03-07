@@ -6,6 +6,8 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 
 class AgentController extends Controller
@@ -15,7 +17,7 @@ class AgentController extends Controller
         $user = auth()->user();
         $org = $user->organization;
 
-        $agents = $org->agents()->orderBy('created_at','DESC')->get();
+        $agents = $org->agents()->orderBy('created_at','DESC')->paginate(7);
 
         return Inertia::render('Agents',[
 
@@ -200,17 +202,6 @@ class AgentController extends Controller
     
         $agentId = $request->input('agent_id');
         $file = $request->file('file');
-
-        logger()->info("upload request", [
-            'agent_id' => $agentId,
-        ]);
-
-        logger()->info('file details', [
-            'original_name' => $file->getClientOriginalName(),
-            'mime_type'     => $file->getMimeType(),
-            'size_bytes'    => $file->getSize(),
-            'path'          => $file->getRealPath(),
-        ]);
     
         $client = new Client();
     
@@ -269,6 +260,74 @@ class AgentController extends Controller
                 'success' => false,
                 'message' => 'Unexpected server error',
                 'error'   => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function destroy(Request $request)
+    {
+        $validated = $request->validate([
+            'agent_id' => 'required|string|max:255',
+        ]);
+
+        $user = auth()->user();
+        $org  = $user->organization;
+
+        $agent = $org->agents()->where('agent_id', $validated['agent_id'])->first();
+
+        if (!$agent) {
+
+            return response()->json([
+                'message' => 'Agent not found in this organization.'
+            ], 404);
+        }
+
+        try {
+
+            $client = new Client();
+
+            $client->request('DELETE', "https://api.elevenlabs.io/v1/convai/agents/{$validated['agent_id']}", [
+                'headers' => [
+                    'xi-api-key' => env('ELEVEN_LABS_KEY'),
+                ]
+            ]);
+
+            DB::beginTransaction();
+
+            $agent->delete();
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Agent deleted successfully.',
+                'agent_id' => $validated['agent_id']
+            ], 200);
+
+        } catch (RequestException $e) {
+
+            Log::error('ElevenLabs agent deletion failed', [
+                'agent_id' => $validated['agent_id'],
+                'error' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to delete agent from ElevenLabs.'
+            ], 500);
+
+        } catch (\Exception $e) {
+
+            DB::rollBack();
+
+            Log::error('Agent deletion failed', [
+                'agent_id' => $validated['agent_id'],
+                'error' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Unexpected error occurred.'
             ], 500);
         }
     }
