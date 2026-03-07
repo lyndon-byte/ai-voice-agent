@@ -173,7 +173,9 @@ function EmbedCodeBlock({ agentId }) {
     const [copied, setCopied] = useState(false);
 
     const copy = () => {
-        navigator.clipboard.writeText(`<elevenlabs-convai agent-id="${agentId || 'YOUR_AGENT_ID'}"></elevenlabs-convai>`);
+        navigator.clipboard.writeText(`<elevenlabs-convai agent-id="${agentId || 'YOUR_AGENT_ID'}"></elevenlabs-convai>
+            <script src="https://unpkg.com/@elevenlabs/convai-widget-embed" async type="text/javascript"></script>`
+        );
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
     };
@@ -212,6 +214,18 @@ function EmbedCodeBlock({ agentId }) {
                     <span className="text-green-600">"{agentId || 'YOUR_AGENT_ID'}"</span>
                     <span className="text-blue-600">&gt;&lt;/elevenlabs-convai&gt;</span>
                 </pre>
+                <pre className="text-xs text-gray-700 font-mono whitespace-pre-wrap break-all">
+                    <span className="text-blue-600">&lt;script</span>{' '}
+                    <span className="text-orange-500">src</span>
+                    <span className="text-gray-600">=</span>
+                    <span className="text-green-600">"https://unpkg.com/@elevenlabs/convai-widget-embed"</span>
+                    <span className="text-orange-500"> async</span>
+                    <span className="text-orange-500"> type</span>
+                    <span className="text-gray-600">=</span>
+                    <span className="text-green-600">"text/javascript"</span>
+                    <span className="text-blue-600">&gt;&lt;/script&gt;</span>
+                </pre>
+                
             </div>
         </div>
     );
