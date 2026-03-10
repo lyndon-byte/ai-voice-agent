@@ -5,6 +5,7 @@ use App\Http\Controllers\AgentController;
 use App\Http\Controllers\AnalysisController;
 use App\Http\Controllers\JobTrackerController;
 use App\Http\Controllers\KnowledgeBaseController; 
+use App\Http\Controllers\PhoneNumbersController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ToolsController;
 use App\Http\Controllers\VoiceController;
@@ -73,25 +74,27 @@ Route::middleware(['auth','verified'])->group(function () {
     Route::get('/app/get-secrets',[WorkSpaceController::class, 'secrets']);
     Route::post('/app/create-secret',[WorkSpaceController::class, 'createSecret']);
     
+    Route::get('/app/phone-numbers',[PhoneNumbersController::class, 'index'])->name('numbers');
+    Route::get('/app/available-numbers',[PhoneNumbersController::class, 'getAvailableNumbers'])->name('available.numbers');
+    Route::get('/app/buy-system-number',[PhoneNumbersController::class, 'buySystemPhoneNumber']);
+    Route::post('/app/import-twilio-phone-number',[PhoneNumbersController::class, 'importTwilioPhoneNumber']);
+
 
     Route::get('/test',function(){
 
-        // $client = new \GuzzleHttp\Client();
-        // $response = $client->request('GET', 'https://api.elevenlabs.io/v1/convai/agents/agent_0001khkj48t8f818stz6zrw03s81',[
+        $client = new \GuzzleHttp\Client();
+        $response = $client->request('GET', 'https://api.elevenlabs.io/v1/convai/agents/agent_0001khkj48t8f818stz6zrw03s81',[
 
-        //     'headers' => [
+            'headers' => [
 
-        //         'xi-api-key' => env('ELEVEN_LABS_KEY'),
-        //         'Content-Type' => 'application/json'
-        //     ]
+                'xi-api-key' => env('ELEVEN_LABS_KEY'),
+                'Content-Type' => 'application/json'
+            ]
 
-        // ]);
-
-        // return json_decode($response->getBody()->getContents(),true);
-
-        return response()->json([
-            'changes' => session('agent_changes', [])
         ]);
+
+        return json_decode($response->getBody()->getContents(),true);
+    
 
     });
 });

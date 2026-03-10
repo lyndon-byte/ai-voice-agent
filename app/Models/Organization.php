@@ -34,5 +34,10 @@ class Organization extends Tenant
         return $this->hasMany(Secrets::class);
     }
 
+    public function numbers(){
+
+        return $this->hasMany(PhoneNumbers::class);
+    }
+
 
 }

@@ -320,7 +320,7 @@ function AgentSelect({ value, onChange, currentAgentId }) {
 
     useEffect(() => {
         setLoading(true);
-        axios.get('/get-all-agents')
+        axios.get('/app/get-agents')
             .then(res => {
                 const list = Array.isArray(res.data) ? res.data : (res.data?.agents ?? []);
                 setAgents(list.filter(a => a.agent_id !== currentAgentId));
@@ -354,7 +354,7 @@ function AgentSelect({ value, onChange, currentAgentId }) {
             <option value="" disabled>Select an agent…</option>
             {agents.map(a => (
                 <option key={a.agent_id} value={a.agent_id}>
-                    {a.name ?? a.agent_id}
+                    {a.agent_name}
                 </option>
             ))}
         </select>

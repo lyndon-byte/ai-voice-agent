@@ -7,14 +7,7 @@ import {
     Settings, 
     ChevronDown,
     Users,
-    BookOpen,
-    Wrench,
-    Plug,
-    Mic,
-    MessageSquare,
-    FlaskConical,
     Phone,
-    MessageCircle,
     Send,
     Sliders
 } from 'lucide-react';
@@ -36,7 +29,9 @@ import {
  */
 export default function AuthenticatedLayout({ header, tabs, activeTab, onTabChange, children }) {
     const user = usePage().props.auth.user;
-
+     
+    const { component } = usePage()
+    
     const [showingNavigationDropdown, setShowingNavigationDropdown] = useState(false);
     const [openDropdowns, setOpenDropdowns] = useState({
         configure: true,
@@ -103,15 +98,13 @@ export default function AuthenticatedLayout({ header, tabs, activeTab, onTabChan
                             <ul className={`space-y-2 py-2 ${openDropdowns.configure ? '' : 'hidden'}`}>
                                 {[
                                     { href: route('agents'), name: 'agents', label: 'Agents', Icon: Users },
-                                    { href: '', name: '', label: 'Knowledge Base', Icon: BookOpen },
-                                    { href: '', name: '', label: 'Tools', Icon: Wrench },
-                                    { href: '', name: '', label: 'Integrations', Icon: Plug },
+                            
                                 ].map(({ href, name, label, Icon }) => (
                                     <li key={label}>
                                         <Link
                                             href={href}
                                             className={`group flex w-full items-center rounded-lg p-2 pl-11 transition-colors ${
-                                                name && route().current(name)
+                                               component === 'Agent' || component === 'Agents'
                                                     ? 'bg-gray-100 text-gray-900'
                                                     : 'text-gray-900 hover:bg-gray-100'
                                             }`}
@@ -124,41 +117,7 @@ export default function AuthenticatedLayout({ header, tabs, activeTab, onTabChan
                             </ul>
                         </li>
 
-                        <li>
-                            <Link href="" className="flex items-center rounded-lg p-2 text-gray-900 transition-colors hover:bg-gray-100">
-                                <Mic className="h-5 w-5 text-gray-500" />
-                                <span className="ms-3 flex items-center">
-                                    Voices
-                                    <span className="ms-2 rounded bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-800">Alpha</span>
-                                </span>
-                            </Link>
-                        </li>
-
-                        {/* Monitor */}
-                        <li>
-                            <button
-                                type="button"
-                                onClick={() => toggleDropdown('monitor')}
-                                className="group flex w-full items-center rounded-lg p-2 text-base text-gray-900 transition duration-75 hover:bg-gray-100"
-                            >
-                                <MessageSquare className="h-5 w-5 text-gray-500" />
-                                <span className="ms-3 flex-1 whitespace-nowrap text-left">Monitor</span>
-                                <ChevronDown className={`h-4 w-4 text-gray-500 transition-transform ${openDropdowns.monitor ? 'rotate-180' : ''}`} />
-                            </button>
-                            <ul className={`space-y-2 py-2 ${openDropdowns.monitor ? '' : 'hidden'}`}>
-                                {[
-                                    { label: 'Conversations', Icon: MessageSquare },
-                                    { label: 'Tests', Icon: FlaskConical },
-                                ].map(({ label, Icon }) => (
-                                    <li key={label}>
-                                        <Link href="" className="group flex w-full items-center rounded-lg p-2 pl-11 text-gray-900 transition-colors hover:bg-gray-100">
-                                            <Icon className="mr-3 h-4 w-4 text-gray-500" />
-                                            {label}
-                                        </Link>
-                                    </li>
-                                ))}
-                            </ul>
-                        </li>
+                       
 
                         {/* Deploy */}
                         <li>
@@ -173,11 +132,19 @@ export default function AuthenticatedLayout({ header, tabs, activeTab, onTabChan
                             </button>
                             <ul className={`space-y-2 py-2 ${openDropdowns.deploy ? '' : 'hidden'}`}>
                                 {[
-                                    { label: 'Phone Numbers', Icon: Phone },
-                                    { label: 'WhatsApp', Icon: MessageCircle },
-                                ].map(({ label, Icon }) => (
+                                    { href: route('numbers'),label: 'Phone Numbers', Icon: Phone },
+
+                                ].map(({ href, label, Icon }) => (
                                     <li key={label}>
-                                        <Link href="" className="group flex w-full items-center rounded-lg p-2 pl-11 text-gray-900 transition-colors hover:bg-gray-100">
+                                        <Link href={href} 
+                                        
+                                            className={`group flex w-full items-center rounded-lg p-2 pl-11 transition-colors ${
+                                                route().current('numbers')
+                                                    ? 'bg-gray-100 text-gray-900'
+                                                    : 'text-gray-900 hover:bg-gray-100'
+                                            }`}
+                                        
+                                        >
                                             <Icon className="mr-3 h-4 w-4 text-gray-500" />
                                             {label}
                                         </Link>
@@ -191,7 +158,6 @@ export default function AuthenticatedLayout({ header, tabs, activeTab, onTabChan
                                 <Send className="h-5 w-5 text-gray-500" />
                                 <span className="ms-3 flex items-center">
                                     Outbound
-                                    <span className="ms-2 rounded bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-800">Alpha</span>
                                 </span>
                             </Link>
                         </li>
