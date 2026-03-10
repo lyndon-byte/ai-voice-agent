@@ -500,7 +500,7 @@ class PhoneNumbersController extends Controller
             ],
             [
                 'label'          => $data['label'] ?? null,
-                'assigned_agent' => $data['assigned_agent'] ? json_encode($data['assigned_agent']) : null,
+                'assigned_agent' => $data['assigned_agent'] ? $data['assigned_agent'] : null,
             ]
         );
 

@@ -78,6 +78,7 @@ Route::middleware(['auth','verified'])->group(function () {
     Route::get('/app/available-numbers',[PhoneNumbersController::class, 'getAvailableNumbers'])->name('available.numbers');
     Route::get('/app/buy-system-number',[PhoneNumbersController::class, 'buySystemPhoneNumber']);
     Route::post('/app/import-twilio-phone-number',[PhoneNumbersController::class, 'importTwilioPhoneNumber']);
+    Route::post('/app/update-phone-number',[PhoneNumbersController::class, 'update']);
 
 
     Route::get('/test',function(){

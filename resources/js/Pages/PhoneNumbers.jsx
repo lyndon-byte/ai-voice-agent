@@ -636,12 +636,27 @@ function SystemNumbersModal({ open, onClose }) {
 
 function NumberDetailDrawer({ open, onClose, item }) {
 
-  const [agents, setAgents] = useState([]);
+  const [agents, setAgents]             = useState([]);
   const [agentsLoading, setAgentsLoading] = useState(false);
-  const [agentsError, setAgentsError] = useState("");
-  const [saving, setSaving] = useState(false);
+  const [agentsError, setAgentsError]   = useState("");
 
-  const hasAgent = item?.assigned_agent != null;
+  // label
+  const [label, setLabel]               = useState("");
+  const [labelSaving, setLabelSaving]   = useState(false);
+  const [labelError, setLabelError]     = useState("");
+  const labelDebounceRef                = useRef(null);
+
+  // agent
+  const [agentSaving, setAgentSaving]   = useState(false);
+  const [agentError, setAgentError]     = useState("");
+
+  // Seed label from item when drawer opens
+  useEffect(() => {
+    if (!open || !item) return;
+    setLabel(item.label ?? "");
+    setLabelError("");
+    setAgentError("");
+  }, [open, item]);
 
   // Load agents automatically when the drawer opens
   useEffect(() => {
@@ -655,34 +670,78 @@ function NumberDetailDrawer({ open, onClose, item }) {
       .finally(() => setAgentsLoading(false));
   }, [open]);
 
+  // ── Label: debounced save ─────────────────────────────────────────────────
+  const handleLabelChange = (val) => {
+    setLabel(val);
+    setLabelError("");
+    clearTimeout(labelDebounceRef.current);
+    if (!val.trim()) return;
+    labelDebounceRef.current = setTimeout(() => {
+      setLabelSaving(true);
+      axios.post("/app/update-phone-number", {
+        phone_number_id: item.phone_number_id,
+        update_item:     "label",
+        label:           val.trim(),
+      })
+        .catch(() => setLabelError("Failed to save label."))
+        .finally(() => setLabelSaving(false));
+    }, 600);
+  };
+
+  // ── Agent: post on select change ──────────────────────────────────────────
   const handleAgentChange = (e) => {
-    const agentId = e.target.value;
-    console.log("Agent selection changed:", agentId === "" ? "removed (no agent)" : agentId);
-    setSaving(true);
-    setTimeout(() => setSaving(false), 800);
+    const agentId    = e.target.value;
+    const isRemoving = agentId === "";
+    setAgentError("");
+    setAgentSaving(true);
+    axios.post("/app/update-phone-number", {
+      phone_number_id: item.phone_number_id,
+      update_item:     isRemoving ? "remove_agent" : "select_agent",
+      ...(isRemoving ? {} : { agent_id: agentId }),
+    })
+      .catch(() => setAgentError("Failed to update agent."))
+      .finally(() => setAgentSaving(false));
   };
 
   const handleDetach = () => {
-    console.log("Detach agent from:", item?.phone_number_id);
+    setAgentError("");
+    setAgentSaving(true);
+    axios.post("/app/update-phone-number", {
+      phone_number_id: item.phone_number_id,
+      update_item:     "remove_agent",
+    })
+      .catch(() => setAgentError("Failed to detach agent."))
+      .finally(() => setAgentSaving(false));
+  };
+
+  const retryLoadAgents = () => {
+    setAgentsLoading(true);
+    setAgentsError("");
+    axios.get("/app/get-agents")
+      .then(res => setAgents(res.data?.agents ?? []))
+      .catch(() => setAgentsError("Failed to load agents"))
+      .finally(() => setAgentsLoading(false));
   };
 
   const handleClose = () => {
+    clearTimeout(labelDebounceRef.current);
     setAgents([]);
     setAgentsError("");
-    setSaving(false);
+    setLabelError("");
+    setAgentError("");
     onClose();
   };
 
   if (!item) return null;
 
-  const source   = SOURCE_BADGE[item.source]   ?? { label: item.source,   cls: "bg-gray-100 text-gray-500" };
-  const provider = PROVIDER_BADGE[item.provider] ?? { label: item.provider, cls: "bg-gray-100 text-gray-500" };
+  const source     = SOURCE_BADGE[item.source]     ?? { label: item.source,    cls: "bg-gray-100 text-gray-500" };
+  const provider   = PROVIDER_BADGE[item.provider] ?? { label: item.provider,  cls: "bg-gray-100 text-gray-500" };
   const currentAgentId = item?.assigned_agent?.agent_id ?? "";
 
   return (
     <Drawer open={open} onClose={handleClose} title="Phone Number" icon={<PhoneIcon size={16}/>} wide>
 
-      {/* Number header block */}
+      {/* ── Header ── */}
       <div className="pb-1">
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
@@ -693,8 +752,7 @@ function NumberDetailDrawer({ open, onClose, item }) {
                 <polyline points="8,12 11,15 16,9" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             </div>
-            <div className="text-sm text-gray-500 mt-1">{item.label}</div>
-            <div className="text-sm text-gray-400 mt-0.5 font-mono">{item.phone_number_id}</div>
+            <div className="text-xs text-gray-400 mt-1 font-mono">{item.phone_number_id}</div>
           </div>
           <div className="flex items-center gap-1.5 shrink-0 mt-1">
             <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${source.cls}`}>{source.label}</span>
@@ -703,7 +761,34 @@ function NumberDetailDrawer({ open, onClose, item }) {
         </div>
       </div>
 
-      {/* Agent section */}
+      {/* ── Label ── */}
+      <SectionCard>
+        <div className="flex items-start justify-between gap-6">
+          <div className="min-w-0">
+            <div className="text-sm font-semibold text-gray-900">Label</div>
+            <div className="text-xs text-gray-500 mt-0.5 leading-relaxed">
+              A friendly name to identify this phone number.
+            </div>
+          </div>
+          <div className="shrink-0 w-52">
+            <div className="relative">
+              <input
+                type="text"
+                value={label}
+                onChange={e => handleLabelChange(e.target.value)}
+                className="w-full border border-gray-200 rounded-lg px-3 py-2  text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
+                placeholder="e.g. Support line"
+              />
+            </div>
+
+            {labelSaving && <p className="text-sm text-gray-500 mt-1.5">Saving...</p>}
+            {labelError && <p className="text-[10px] text-red-500 mt-1">{labelError}</p>}
+
+          </div>
+        </div>
+      </SectionCard>
+
+      {/* ── Agent ── */}
       <SectionCard>
         <div className="flex items-start justify-between gap-6">
           <div className="min-w-0">
@@ -714,20 +799,8 @@ function NumberDetailDrawer({ open, onClose, item }) {
           </div>
 
           <div className="shrink-0 w-52">
-            {/* Assigned agent card */}
-            {hasAgent && (
-              <div className="mb-2 flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
-                <span className="w-6 h-6 rounded-full bg-gray-900 text-white text-[10px] flex items-center justify-center font-semibold uppercase shrink-0">
-                  {item.assigned_agent?.agent_name?.[0] ?? "A"}
-                </span>
-                <div>
-                  <div className="text-xs font-medium text-gray-900 leading-none">{item.assigned_agent?.agent_name ?? "Agent"}</div>
-                  <div className="text-[10px] text-gray-400 mt-0.5 font-mono leading-none">{item.assigned_agent?.agent_id}</div>
-                </div>
-              </div>
-            )}
-
-            {/* Loading skeleton — shown while fetching agents */}
+            
+            {/* Loading skeleton */}
             {agentsLoading ? (
               <div className="w-full h-9 bg-gray-100 rounded-lg animate-pulse flex items-center px-3 gap-2">
                 <div className="h-2.5 bg-gray-300 rounded w-2/3"/>
@@ -736,55 +809,36 @@ function NumberDetailDrawer({ open, onClose, item }) {
             ) : agentsError ? (
               <div className="flex items-center justify-between gap-2 border border-red-100 bg-red-50 rounded-lg px-3 py-2">
                 <p className="text-xs text-red-500">{agentsError}</p>
-                <button
-                  onClick={() => {
-                    setAgentsLoading(true);
-                    setAgentsError("");
-                    axios.get("/app/get-agents")
-                      .then(res => setAgents(res.data?.agents ?? []))
-                      .catch(() => setAgentsError("Failed to load agents"))
-                      .finally(() => setAgentsLoading(false));
-                  }}
-                  className="text-xs text-red-500 underline hover:text-red-700 shrink-0"
-                >
-                  Retry
-                </button>
+                <button onClick={retryLoadAgents} className="text-xs text-red-500 underline hover:text-red-700 shrink-0">Retry</button>
               </div>
             ) : (
-              /* Dropdown — rendered only once agents are loaded */
               <div className="relative">
                 <select
                   defaultValue={currentAgentId}
                   onChange={handleAgentChange}
-                  className="w-full appearance-none border border-gray-200 rounded-lg pl-3 pr-8 py-2 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent cursor-pointer"
+                  disabled={agentSaving}
+                  className="w-full appearance-none border border-gray-200 rounded-lg pl-3 pr-8 py-2 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent disabled:opacity-60 cursor-pointer"
                 >
                   <option value="">No agent</option>
                   {agents.map(a => (
-                    <option key={a.agent_id} value={a.agent_id}>
-                      {a.agent_name}
-                    </option>
+                    <option key={a.agent_id} value={a.agent_id}>{a.agent_name}</option>
                   ))}
                 </select>
-               
+              
               </div>
             )}
 
-            {saving && <p className="text-[10px] text-gray-400 mt-1.5">Saving…</p>}
+            {agentError && <p className="text-[10px] text-red-500 mt-1.5">{agentError}</p>}
 
-            {hasAgent && !agentsLoading && !agentsError && (
-              <button
-                onClick={handleDetach}
-                className="mt-2 text-xs text-red-500 hover:text-red-700 hover:underline transition-colors"
-              >
-                Detach agent
-              </button>
-            )}
+            {agentSaving && <p className="text-sm text-gray-500 mt-1.5">Saving...</p>}
+
           </div>
         </div>
       </SectionCard>
 
     </Drawer>
   );
+  
 }
 
 
@@ -820,12 +874,12 @@ function NumberRow({ item, onClick }) {
         {item.assigned_agent ? (
           <div className="flex items-center gap-1.5">
             <span className="w-5 h-5 rounded-full bg-gray-900 text-white text-[10px] flex items-center justify-center font-semibold uppercase">
-              {item.assigned_agent?.name?.[0] ?? "A"}
+              {item.assigned_agent?.agent_name?.[0] ?? "A"}
             </span>
-            <span className="text-xs text-gray-600 max-w-[100px] truncate">{item.assigned_agent?.name ?? "Agent"}</span>
+            <span className="text-sm text-gray-600 max-w-[100px] truncate">{item.assigned_agent?.agent_name ?? "Agent"}</span>
           </div>
         ) : (
-          <span className="text-xs text-gray-400">No agent</span>
+          <span className="text-xs text-gray-400"></span>
         )}
       </div>
 
