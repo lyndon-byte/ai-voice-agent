@@ -866,20 +866,12 @@ function NumberRow({ item, onClick }) {
           <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${source.cls}`}>{source.label}</span>
           <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${provider.cls}`}>{provider.label}</span>
         </div>
-        <div className="text-md text-gray-400 mt-0.5 font-mono">{item.phone_number}</div>
-      </div>
-
-      {/* Assigned agent */}
-      <div className="shrink-0 text-right">
-        {item.assigned_agent ? (
-          <div className="flex items-center gap-1.5">
-            <span className="w-5 h-5 rounded-full bg-gray-900 text-white text-[10px] flex items-center justify-center font-semibold uppercase">
-              {item.assigned_agent?.agent_name?.[0] ?? "A"}
-            </span>
-            <span className="text-sm text-gray-600 max-w-[100px] truncate">{item.assigned_agent?.agent_name ?? "Agent"}</span>
+        <div className="text-sm text-gray-400 mt-0.5 font-mono">{item.phone_number}</div>
+        {item.assigned_agent && (
+          <div className="flex items-center gap-1 mt-0.5">
+            <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wide">Agent:</span>
+            <span className="text-xs text-gray-600 truncate">{item.assigned_agent.agent_name}</span>
           </div>
-        ) : (
-          <span className="text-xs text-gray-400"></span>
         )}
       </div>
 

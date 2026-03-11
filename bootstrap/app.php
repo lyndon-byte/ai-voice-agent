@@ -25,7 +25,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'role_or_permission' => RoleOrPermissionMiddleware::class,
         ]);
         $middleware->validateCsrfTokens(except: [  
-            '/app/knowledge-base'
+            // '/app/knowledge-base',
+            '/receive-webhook'
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

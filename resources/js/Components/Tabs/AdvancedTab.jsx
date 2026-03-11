@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { useAgentChanges } from "@/Contexts/AgentChangesContext";
 import axios from "axios";
 import { Trash2 } from "lucide-react";
 
@@ -88,7 +87,7 @@ function SecretModal({ secret, onClose }) {
                   <span className="font-semibold text-gray-700">not be shown again</span>. Copy it
                   now and store it somewhere safe. Use it to verify the{" "}
                   <code className="bg-gray-100 px-1 rounded text-gray-700 text-xs">
-                    ElevenLabs-Signature
+                    X-Webhook-Signature
                   </code>{" "}
                   header on incoming payloads.
                 </p>
@@ -127,19 +126,11 @@ function SecretModal({ secret, onClose }) {
   }
 
 // ── Main component ───────────────────────────────────────────────────────────
-export default function AdvancedTab({ platformSettings }) {
-  const webhookId = platformSettings?.workspace_overrides?.webhooks?.post_call_webhook_id ?? null;
-  
-  const { trackChange } = useAgentChanges()
+export default function AdvancedTab() {
+    
   // ── state: current webhook detail ──
   const [currentWebhook, setCurrentWebhook] = useState(null);
   const [loadingCurrent, setLoadingCurrent] = useState(false);
-
-  // ── state: select-webhook modal ──
-  const [selectOpen, setSelectOpen] = useState(false);
-  const [allWebhooks, setAllWebhooks] = useState([]);
-  const [loadingAll, setLoadingAll] = useState(false);
-  const [selectedId, setSelectedId] = useState(webhookId);
 
   // ── state: create-webhook modal ──
   const [createOpen, setCreateOpen] = useState(false);
@@ -149,98 +140,84 @@ export default function AdvancedTab({ platformSettings }) {
   const [newSecret, setNewSecret] = useState(null); // shown once after creation
   const [createError, setCreateError] = useState("");
 
-  // ── 1. load existing webhook detail on mount if id present ──
+  // ── 1. load existing webhook detail on mount ──
   useEffect(() => {
-    if (!webhookId) return;
+    
     setLoadingCurrent(true);
     axios
-      .get("/app/get-webhooks", { params: { webhook_id: webhookId } })
+      .get("/app/get-webhook")
       .then((res) => setCurrentWebhook(res.data?.webhook ?? null))
       .catch(() => setCurrentWebhook(null))
       .finally(() => setLoadingCurrent(false));
-  }, [webhookId]);
 
-  // ── 2. load all webhooks when select modal opens ──
-  useEffect(() => {
-    if (!selectOpen) return;
-    setLoadingAll(true);
-    axios
-      .get("/app/get-webhooks")
-      .then((res) => setAllWebhooks(res.data?.webhooks ?? []))
-      .catch(() => setAllWebhooks([]))
-      .finally(() => setLoadingAll(false));
-  }, [selectOpen]);
+  }, []);
 
-  // ── handlers ──
-  function applySelection() {
-    const chosen = allWebhooks.find((w) => w.webhook_id === selectedId) ?? null;
-    if (chosen) setCurrentWebhook(chosen);
-    trackChange("workspace_overrides", {
-      webhooks: {
-        post_call_webhook_id: selectedId || null,
-        events: ["transcript"],
-        send_audio: false,
-      },
-    });
-    setSelectOpen(false);
-  }
 
-  function handleDetach() {
-    setCurrentWebhook(null);
-    setSelectedId(null);
-    trackChange("workspace_overrides", {
-      webhooks: {
-        post_call_webhook_id: null,
-        events: ["transcript"],
-        send_audio: false,
-      },
-    });
+  async function handleDetach() {
+
+    
+    try {
+
+        const res = await axios.post("/app/delete-webhook");
+        const { success } = res.data ?? {};
+
+        if(success){
+
+          setCurrentWebhook(null);
+
+        }
+
+    } catch {
+
+        setCreateError("Failed to delete webhook. Please try again.");
+
+    } 
+
   }
 
   // ── create new webhook ──
   async function handleCreate() {
+
     if (!createName.trim() || !createUrl.trim()) {
       setCreateError("Both name and URL are required.");
       return;
     }
+
     setCreateError("");
     setCreating(true);
-    try {
-      const res = await axios.post("/app/create-webhook", {
-        name: createName.trim(),
-        webhook_url: createUrl.trim(),
-      });
-      const { webhook_id, secret } = res.data ?? {};
-      const webhookData = res.data?.webhook ?? null;
 
-      // Immediately reflect in the card without waiting for a refetch
-      setCurrentWebhook(
-        webhookData ?? {
+    try {
+
+        const res = await axios.post("/app/create-webhook", {
           name: createName.trim(),
           webhook_url: createUrl.trim(),
-          webhook_id: webhook_id ?? null,
-        }
-      );
-      setSelectedId(webhook_id ?? null);
+        });
+        const { webhook_id, secret } = res.data ?? {};
+        const webhookData = res.data?.webhook ?? null;
 
-      trackChange("workspace_overrides", {
-        webhooks: {
-          post_call_webhook_id: webhook_id ?? null,
-          events: ["transcript"],
-          send_audio: false,
-        },
-      });
+        // Immediately reflect in the card without waiting for a refetch
+        setCurrentWebhook(
+          webhookData ?? {
+            name: createName.trim(),
+            webhook_url: createUrl.trim(),
+            webhook_id: webhook_id ?? null,
+          }
+        );
 
-      if (secret) setNewSecret(secret);
+        if (secret) setNewSecret(secret);
 
-      setCreateOpen(false);
-      setSelectOpen(false);
-      setCreateName("");
-      setCreateUrl("");
+        setCreateOpen(false);
+        setCreateName("");
+        setCreateUrl("");
+
     } catch {
-      setCreateError("Failed to create webhook. Please try again.");
+
+        setCreateError("Failed to create webhook. Please try again.");
+
     } finally {
-      setCreating(false);
+
+        setCreating(false);
+
     }
   }
 
@@ -252,23 +229,6 @@ export default function AdvancedTab({ platformSettings }) {
   }
 
 
-  // ── webhook list card ──
-  function WebhookCard({ wh }) {
-    const active = selectedId === wh.webhook_id;
-    return (
-      <button
-        onClick={() => setSelectedId(wh.webhook_id)}
-        className={`w-full text-left rounded border px-4 py-3 transition-all ${
-          active
-            ? "border-gray-900 bg-gray-50 ring-1 ring-gray-900"
-            : "border-gray-200 hover:border-gray-400 hover:bg-gray-50"
-        }`}
-      >
-        <p className="text-sm font-medium text-gray-900 truncate">{wh.name}</p>
-        <p className="text-xs text-gray-500 mt-0.5 truncate">{wh.webhook_url}</p>
-      </button>
-    );
-  }
 
   return (
 
@@ -282,10 +242,12 @@ export default function AdvancedTab({ platformSettings }) {
             {/* Only show Select Webhook button when no webhook is attached */}
             {!currentWebhook && !loadingCurrent && (
                 <button
-                    onClick={() => setSelectOpen(true)}
+                    onClick={() => {
+                        setCreateOpen(true);
+                    }}
                     className="rounded border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
                 >
-                    Select Webhook
+                    Add Webhook
                 </button>
             )}
         </div>
@@ -321,63 +283,6 @@ export default function AdvancedTab({ platformSettings }) {
             </div>
         )}
         </div>
-
-        {/* ══════════════════════════════════════════════════════════════════════
-            MODAL — Select Webhook
-        ══════════════════════════════════════════════════════════════════════ */}
-        <Modal
-            open={selectOpen}
-            onClose={() => setSelectOpen(false)}
-            title="Select Webhook"
-            subtitle="Choose an existing webhook or create a new one."
-        >
-        {loadingAll ? (
-            <div className="flex items-center justify-center py-8 gap-2">
-                <Spinner />
-                <span className="text-sm text-gray-400">Loading webhooks…</span>
-            </div>
-        ) : allWebhooks.length > 0 ? (
-            <div className="space-y-2 mb-5">
-                {allWebhooks.map((wh) => (
-                    <WebhookCard key={wh.webhook_id} wh={wh} />
-                ))}
-            </div>
-        ) : (
-            <p className="text-sm text-gray-400 text-center py-6 mb-2">
-                No webhooks found. Create one below.
-            </p>
-        )}
-
-        <div className="border-t border-gray-100 pt-4 space-y-2">
-            <button
-                onClick={() => {
-                    setSelectOpen(false);
-                    setCreateOpen(true);
-                }}
-                className="w-full rounded border border-gray-200 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-            >
-                + Create Webhook
-            </button>
-
-            {allWebhooks.length > 0 && (
-                <div className="flex gap-2">
-                    <button
-                        onClick={() => setSelectOpen(false)}
-                        className="flex-1 rounded border border-gray-200 py-2 text-sm text-gray-600 hover:bg-gray-50 transition-colors"
-                    >
-                        Cancel
-                    </button>
-                    <button
-                        onClick={applySelection}
-                        disabled={!selectedId}
-                        className="flex-1 rounded bg-gray-900 py-2 text-sm font-medium text-white hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                    >
-                        Apply
-                    </button>
-                </div>
-            )}
-        </div>
-        </Modal>
 
         {/* ══════════════════════════════════════════════════════════════════════
             MODAL — Create Webhook
@@ -421,7 +326,7 @@ export default function AdvancedTab({ platformSettings }) {
                         <p className="text-xs font-medium text-gray-700">Webhook Auth Method</p>
                         <p className="text-xs text-gray-500 mt-1 leading-relaxed">
                         HMAC will generate a shared secret used to sign all webhook payloads. You should
-                        verify the "ElevenLabs-Signature" header using this secret.
+                        verify the "X-Webhook-Signature" header using this secret.
                         </p>
                     </div>
                     <span className="shrink-0 rounded border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-700 font-medium">

@@ -69,8 +69,9 @@ Route::middleware(['auth','verified'])->group(function () {
     Route::get('/app/get-conversation-details',[AnalysisController::class, 'getConversationDetails']);
     Route::get('/app/get-conversation-audio',[AnalysisController::class, 'getConversationAudio']);
 
-    Route::get('/app/get-webhooks',[WorkSpaceController::class, 'webhooks']);
+    Route::get('/app/get-webhook',[WorkSpaceController::class, 'webhook']);
     Route::post('/app/create-webhook',[WorkSpaceController::class, 'createWebhook']);
+    Route::post('/app/delete-webhook',[WorkSpaceController::class, 'deleteWebhook']);
     Route::get('/app/get-secrets',[WorkSpaceController::class, 'secrets']);
     Route::post('/app/create-secret',[WorkSpaceController::class, 'createSecret']);
     
@@ -99,6 +100,10 @@ Route::middleware(['auth','verified'])->group(function () {
 
     });
 });
+
+// test webhook receivers
+
+Route::post('/receive-webhook',[WorkSpaceController::class, 'receiveWebhook']);
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

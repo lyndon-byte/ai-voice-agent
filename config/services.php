@@ -31,6 +31,7 @@ return [
     ],
     'elevenlabs' => [
         'api_key' => env('ELEVEN_LABS_KEY'),
+        'webhook_auth_key' => env('ELEVEN_LABS_WEBHOOK_AUTH_SECRET_KEY'),
     ],
     'twilio' => [
         'auth_token' => env('TWILIO_AUTH_TOKEN',''),

@@ -98,7 +98,7 @@ export default function Agent({ agent,currentVoice,localKb,currentTab }) {
                             )}
                             
                             {activeTab === 'advanced' && (
-                                <AdvancedTab platformSettings={platformSettings} />
+                                <AdvancedTab  />
                             )}
                         </div>
                 </div>

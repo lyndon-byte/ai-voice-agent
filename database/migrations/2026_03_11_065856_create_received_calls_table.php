@@ -11,13 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('webhooks', function (Blueprint $table) {
+        Schema::create('received_calls', function (Blueprint $table) {
             $table->id();
             $table->foreignId('organization_id')->nullable()->constrained('tenants')->cascadeOnDelete();
-            $table->string('webhook_id');
-            $table->string('name');
-            $table->string('webhook_url');
-            $table->string('auth_hmac');
+            $table->string('agent_id');
+            $table->string('agent_name');
+            $table->integer('duration');
+            $table->integer('credits');
+            $table->decimal('llm_cost', 10, 6);           
             $table->timestamps();
         });
     }
@@ -27,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('webhooks');
+        Schema::dropIfExists('received_calls');
     }
 };

@@ -24,9 +24,10 @@ class Organization extends Tenant
         return $this->hasMany(Tools::class);
     }
 
-    public function webhooks(){
+    // post call webhook only
+    public function webhook(){
 
-        return $this->hasMany(Webhooks::class);
+        return $this->hasOne(Webhooks::class);
     }
 
     public function secrets(){
@@ -37,6 +38,11 @@ class Organization extends Tenant
     public function numbers(){
 
         return $this->hasMany(PhoneNumbers::class);
+    }
+
+    public function receivedCalls(){
+
+        return $this->hasMany(ReceivedCalls::class);
     }
 
 
