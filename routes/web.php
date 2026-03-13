@@ -3,10 +3,13 @@
 use App\Http\Controllers\AgentChangesController;
 use App\Http\Controllers\AgentController;
 use App\Http\Controllers\AnalysisController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\JobTrackerController;
 use App\Http\Controllers\KnowledgeBaseController; 
 use App\Http\Controllers\PhoneNumbersController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\SuperAdminDashboardController;
+use App\Http\Controllers\SuperAdminImpersonationController;
 use App\Http\Controllers\ToolsController;
 use App\Http\Controllers\VoiceController;
 use App\Http\Controllers\WorkSpaceController;
@@ -23,16 +26,20 @@ Route::get('/', function () {
     ]);
 });
 
-Route::get('/app/dashboard', function () {
-    return Inertia::render('Dashboard');
-})->middleware(['auth', 'verified','org','role:owner'])->name('dashboard');
 
+Route::middleware(['auth','org','role:system'])->group(function () {
+    
+    Route::get('/admin/dashboard',[SuperAdminDashboardController::class,'index'])->name('system.admin.dashboard');
+    Route::post('/admin/impersonate/{user}',[SuperAdminImpersonationController::class,'createToken']);
+    Route::get('/impersonate/{token}',[SuperAdminImpersonationController::class,'login']);
+    Route::post('/impersonate/leave',[SuperAdminImpersonationController::class,'leave']);
+    
+});
 
-Route::middleware(['auth','verified'])->group(function () {
+Route::middleware(['auth','verified','org','role:owner'])->group(function () {
 
-    Route::get('/app/dashboard', function () {
-        return Inertia::render('Dashboard');
-    })->name('dashboard');
+    Route::get('/app/dashboard',[DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/app/dashboard/stats', [DashboardController::class, 'stats'])->name('dashboard.stats');
 
     Route::get('/app/agents', [AgentController::class, 'index'])->name('agents');
     Route::get('/app/get-agents', [AgentController::class, 'getAgents'])->name('agents.get');
@@ -80,28 +87,7 @@ Route::middleware(['auth','verified'])->group(function () {
     Route::get('/app/buy-system-number',[PhoneNumbersController::class, 'buySystemPhoneNumber']);
     Route::post('/app/import-twilio-phone-number',[PhoneNumbersController::class, 'importTwilioPhoneNumber']);
     Route::post('/app/update-phone-number',[PhoneNumbersController::class, 'update']);
-
-
-    Route::get('/test',function(){
-
-        $client = new \GuzzleHttp\Client();
-        $response = $client->request('GET', 'https://api.elevenlabs.io/v1/convai/agents/agent_0001khkj48t8f818stz6zrw03s81',[
-
-            'headers' => [
-
-                'xi-api-key' => env('ELEVEN_LABS_KEY'),
-                'Content-Type' => 'application/json'
-            ]
-
-        ]);
-
-        return json_decode($response->getBody()->getContents(),true);
-    
-
-    });
 });
-
-// test webhook receivers
 
 Route::post('/receive-webhook',[WorkSpaceController::class, 'receiveWebhook']);
 

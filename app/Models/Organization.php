@@ -7,7 +7,12 @@ use Spatie\Multitenancy\Models\Tenant;
 class Organization extends Tenant
 {
     protected $table = 'tenants';
-    protected $fillable = ['name','domain','database'];
+    protected $fillable = ['name','domain','database','active'];
+
+    public function users(){
+
+        return $this->hasMany(User::class);
+    }
 
     public function agents(){
 

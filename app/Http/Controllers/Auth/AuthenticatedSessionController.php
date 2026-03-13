@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Inertia\Response;
+use Spatie\Permission\PermissionRegistrar;
 
 class AuthenticatedSessionController extends Controller
 {
@@ -33,7 +34,17 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        $user = Auth::user();
+
+        app(PermissionRegistrar::class)
+        ->setPermissionsTeamId($user->organization_id);
+
+        if ($user->hasRole('system')) {
+
+            return redirect()->route('system.admin.dashboard');
+        }
+        
+        return redirect()->route('dashboard');
     }
 
     /**

@@ -12,21 +12,7 @@ import {
     Sliders
 } from 'lucide-react';
 
-/**
- * AuthenticatedLayout
- *
- * Props:
- *  - header: string | ReactNode  — page title shown in the top nav bar
- *  - tabs: Array<{ id, label, icon?, href?, routeName? }>  — optional tab list
- *  - activeTab: string            — controlled active tab id (used when tabs have no href)
- *  - onTabChange: (id) => void    — called when a non-link tab is clicked
- *  - children
- *
- * When `tabs` is supplied the top nav expands to show a tab row beneath the
- * header text.  A tab becomes "active" when:
- *   1. Its `routeName` matches the current Inertia route, OR
- *   2. Its `id` matches `activeTab` (for client-side tab switching).
- */
+
 export default function AuthenticatedLayout({ header, tabs, activeTab, onTabChange, children }) {
     const user = usePage().props.auth.user;
      
@@ -61,9 +47,9 @@ export default function AuthenticatedLayout({ header, tabs, activeTab, onTabChan
                 }`}
             >
                 {/* Logo */}
-                <div className="flex h-16 items-center border-gray-200 px-4">
+                <div className="flex h-16 items-center justify-center border-gray-200 px-4">
                     <Link href="/" className="flex items-center">
-                        <ApplicationLogo className="h-8 w-auto fill-current text-gray-800" />
+                        <ApplicationLogo className="w-auto fill-current text-gray-800" style={{ width: 110, height: 110 }}/>
                     </Link>
                 </div>
 
@@ -163,12 +149,27 @@ export default function AuthenticatedLayout({ header, tabs, activeTab, onTabChan
                         </li>
 
                         <li>
-                            <Link href="" className="flex items-center rounded-lg p-2 text-gray-900 transition-colors hover:bg-gray-100">
+                            <Link 
+                                
+                                href={route('profile.edit')} 
+                                className={`flex items-center rounded-lg p-2 text-gray-900 transition-colors
+                                        ${route().current('profile.edit')
+                                            ? 'bg-gray-100 text-gray-900'
+                                            : 'text-gray-900 hover:bg-gray-100'
+                                        }`}
+                            >
                                 <Settings className="h-5 w-5 text-gray-500" />
                                 <span className="ms-3">Settings</span>
                             </Link>
                         </li>
                     </ul>
+                </div>
+
+                <div className="absolute bottom-0 left-0 w-full border-t border-gray-200 bg-white px-4 py-3 text-center">
+                    <p className="text-xs text-gray-400">
+                        powered by{' '}
+                        <span className="font-semibold text-gray-500">Eleven Labs</span>
+                    </p>
                 </div>
             </aside>
 
@@ -221,7 +222,6 @@ export default function AuthenticatedLayout({ header, tabs, activeTab, onTabChan
                                     <div className="text-gray-500">{user.email}</div>
                                 </div>
                                 <div className="border-t border-gray-100" />
-                                <Dropdown.Link href={route('profile.edit')}>Profile</Dropdown.Link>
                                 <Dropdown.Link href={route('logout')} method="post" as="button">Log Out</Dropdown.Link>
                             </Dropdown.Content>
                         </Dropdown>

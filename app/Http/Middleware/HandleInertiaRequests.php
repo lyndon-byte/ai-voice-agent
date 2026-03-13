@@ -34,6 +34,7 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user(),
             ],
+            'impersonated_by' => $request->session()->get('impersonated_by')
         ];
     }
 }

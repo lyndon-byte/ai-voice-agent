@@ -18,10 +18,22 @@ class SetOrganizationContext
     {
         
         if (auth()->check()) {
-            app(PermissionRegistrar::class)
-                ->setPermissionsTeamId(auth()->user()->organization_id);
+
+            $user = auth()->user();
+
+            if ($user->organization_id) {
+
+                app(PermissionRegistrar::class)
+                    ->setPermissionsTeamId($user->organization_id);
+
+            } else {
+
+                app(PermissionRegistrar::class)
+                    ->setPermissionsTeamId(null);
+
+            }
         }
-        
+
         return $next($request);
     }
 }

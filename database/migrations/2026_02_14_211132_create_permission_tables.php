@@ -72,6 +72,7 @@ return new class extends Migration
         });
 
         Schema::create($tableNames['model_has_roles'], static function (Blueprint $table) use ($tableNames, $columnNames, $pivotRole, $teams) {
+            
             $table->unsignedBigInteger($pivotRole);
 
             $table->string('model_type');
