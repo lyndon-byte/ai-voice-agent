@@ -32,9 +32,16 @@ Route::middleware(['auth','org','role:system'])->group(function () {
     Route::get('/admin/dashboard',[SuperAdminDashboardController::class,'index'])->name('system.admin.dashboard');
     Route::post('/admin/impersonate/{user}',[SuperAdminImpersonationController::class,'createToken']);
     Route::get('/impersonate/{token}',[SuperAdminImpersonationController::class,'login']);
-    Route::post('/impersonate/leave',[SuperAdminImpersonationController::class,'leave']);
     
 });
+
+Route::middleware(['auth','impersonation'])->group(function () {
+    
+    Route::post('/impersonate/leave',[SuperAdminImpersonationController::class,'leave']);
+
+});
+
+
 
 Route::middleware(['auth','verified','org','role:owner'])->group(function () {
 
@@ -87,6 +94,8 @@ Route::middleware(['auth','verified','org','role:owner'])->group(function () {
     Route::get('/app/buy-system-number',[PhoneNumbersController::class, 'buySystemPhoneNumber']);
     Route::post('/app/import-twilio-phone-number',[PhoneNumbersController::class, 'importTwilioPhoneNumber']);
     Route::post('/app/update-phone-number',[PhoneNumbersController::class, 'update']);
+
+
 });
 
 Route::post('/receive-webhook',[WorkSpaceController::class, 'receiveWebhook']);

@@ -1,6 +1,6 @@
 import ApplicationLogo from '@/Components/ApplicationLogo';
 import Dropdown from '@/Components/Dropdown';
-import { Link, usePage } from '@inertiajs/react';
+import { Link, router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 import { 
     Home, 
@@ -9,13 +9,18 @@ import {
     Users,
     Phone,
     Send,
-    Sliders
+    Sliders,
+    ShieldAlert,
+    LogOut
 } from 'lucide-react';
 
 
 export default function AuthenticatedLayout({ header, tabs, activeTab, onTabChange, children }) {
-    const user = usePage().props.auth.user;
-     
+
+    const { auth, impersonated_by } = usePage().props;
+    
+    const user = auth.user;
+
     const { component } = usePage()
     
     const [showingNavigationDropdown, setShowingNavigationDropdown] = useState(false);
@@ -38,11 +43,44 @@ export default function AuthenticatedLayout({ header, tabs, activeTab, onTabChan
 
     const hasTabs = Array.isArray(tabs) && tabs.length > 0;
 
+    const handleLeaveImpersonation = () => {
+        
+        router.post('/impersonate/leave')
+        
+    };
+
+    const bannerHeight = impersonated_by ? 40 : 0;
+    const navHeight = hasTabs ? 108 : 64;
+    const totalOffset = bannerHeight + navHeight;
+
     return (
         <div className="min-h-screen bg-gray-100">
+
+            {/* ── Impersonation Banner ─────────────────────────────────── */}
+            {impersonated_by && (
+                <div className="fixed left-0 right-0 top-0 z-50 flex h-10 items-center justify-between bg-amber-500 px-4 shadow-md">
+                    <div className="flex items-center gap-2 text-sm font-medium text-amber-950">
+                        <ShieldAlert className="h-4 w-4 shrink-0" />
+                        <span>
+                            impersonating{' '}
+                            <span className="font-bold">{user.name}</span>
+                            {' '}({user.email})
+                        </span>
+                    </div>
+                    <button
+                        onClick={handleLeaveImpersonation}
+                        className="flex items-center gap-1.5 rounded-md bg-amber-950 px-3 py-1 text-xs font-semibold text-amber-100 transition-colors hover:bg-amber-800 focus:outline-none focus:ring-2 focus:ring-amber-950 focus:ring-offset-1 focus:ring-offset-amber-500"
+                    >
+                        <LogOut className="h-3.5 w-3.5" />
+                        Leave Impersonation
+                    </button>
+                </div>
+            )}
+
             {/* ── Sidebar ─────────────────────────────────────────────────── */}
             <aside
-                className={`fixed left-0 top-0 z-40 h-screen w-64 -translate-x-full border-r border-gray-200 bg-white transition-transform lg:translate-x-0 ${
+                style={{ top: bannerHeight }}
+                className={`fixed left-0 z-40 h-[calc(100vh-${bannerHeight}px)] w-64 -translate-x-full border-r border-gray-200 bg-white transition-transform lg:translate-x-0 ${
                     showingNavigationDropdown ? 'translate-x-0' : ''
                 }`}
             >
@@ -103,8 +141,6 @@ export default function AuthenticatedLayout({ header, tabs, activeTab, onTabChan
                             </ul>
                         </li>
 
-                       
-
                         {/* Deploy */}
                         <li>
                             <button
@@ -118,18 +154,15 @@ export default function AuthenticatedLayout({ header, tabs, activeTab, onTabChan
                             </button>
                             <ul className={`space-y-2 py-2 ${openDropdowns.deploy ? '' : 'hidden'}`}>
                                 {[
-                                    { href: route('numbers'),label: 'Phone Numbers', Icon: Phone },
-
+                                    { href: route('numbers'), label: 'Phone Numbers', Icon: Phone },
                                 ].map(({ href, label, Icon }) => (
                                     <li key={label}>
                                         <Link href={href} 
-                                        
                                             className={`group flex w-full items-center rounded-lg p-2 pl-11 transition-colors ${
                                                 route().current('numbers')
                                                     ? 'bg-gray-100 text-gray-900'
                                                     : 'text-gray-900 hover:bg-gray-100'
                                             }`}
-                                        
                                         >
                                             <Icon className="mr-3 h-4 w-4 text-gray-500" />
                                             {label}
@@ -142,15 +175,12 @@ export default function AuthenticatedLayout({ header, tabs, activeTab, onTabChan
                         <li>
                             <Link href="" className="flex items-center rounded-lg p-2 text-gray-900 transition-colors hover:bg-gray-100">
                                 <Send className="h-5 w-5 text-gray-500" />
-                                <span className="ms-3 flex items-center">
-                                    Outbound
-                                </span>
+                                <span className="ms-3 flex items-center">Outbound</span>
                             </Link>
                         </li>
 
                         <li>
                             <Link 
-                                
                                 href={route('profile.edit')} 
                                 className={`flex items-center rounded-lg p-2 text-gray-900 transition-colors
                                         ${route().current('profile.edit')
@@ -182,7 +212,10 @@ export default function AuthenticatedLayout({ header, tabs, activeTab, onTabChan
             )}
 
             {/* ── Top Header ──────────────────────────────────────────────── */}
-            <nav className={`fixed left-0 right-0 top-0 z-20 border-b border-gray-200 bg-white lg:left-64 ${hasTabs ? '' : ''}`}>
+            <nav
+                style={{ top: bannerHeight }}
+                className="fixed left-0 right-0 z-20 border-b border-gray-200 bg-white lg:left-64"
+            >
                 {/* Primary bar — always 64 px tall */}
                 <div className="flex h-16 items-center justify-between px-4">
                     {/* Left: hamburger + title */}
@@ -211,7 +244,7 @@ export default function AuthenticatedLayout({ header, tabs, activeTab, onTabChan
                                     className="flex items-center rounded-full bg-gray-100 p-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-200"
                                 >
                                     <span className="sr-only">Open user menu</span>
-                                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-600 text-white">
+                                    <div className={`flex h-8 w-8 items-center justify-center rounded-full text-white ${impersonated_by ? 'bg-amber-500 ring-2 ring-amber-300' : 'bg-gray-600'}`}>
                                         {user.name.charAt(0).toUpperCase()}
                                     </div>
                                 </button>
@@ -220,15 +253,34 @@ export default function AuthenticatedLayout({ header, tabs, activeTab, onTabChan
                                 <div className="px-4 py-2 text-sm text-gray-900">
                                     <div className="font-medium">{user.name}</div>
                                     <div className="text-gray-500">{user.email}</div>
+                                    {impersonated_by && (
+                                        <div className="mt-1 flex items-center gap-1 text-xs text-amber-600">
+                                            <ShieldAlert className="h-3 w-3" />
+                                            Impersonated by {impersonated_by.name}
+                                        </div>
+                                    )}
                                 </div>
                                 <div className="border-t border-gray-100" />
-                                <Dropdown.Link href={route('logout')} method="post" as="button">Log Out</Dropdown.Link>
+                                {impersonated_by ? (
+
+                                    <div
+                                        title="Cannot log out while impersonating a user"
+                                        className="flex w-full cursor-not-allowed items-center px-4 py-2 text-left text-sm text-gray-300 select-none"
+                                    >
+                                        <span>Log Out</span>
+                                        <span className="ml-auto text-xs text-amber-400">(impersonating)</span>
+                                    </div>
+
+                                ) : (
+
+                                    <Dropdown.Link href={route('logout')} method="post" as="button">Log Out</Dropdown.Link>
+                                )}
                             </Dropdown.Content>
                         </Dropdown>
                     </div>
                 </div>
 
-                {/* ── Tab bar — only rendered when `tabs` prop is provided ── */}
+                {/* ── Tab bar ── */}
                 {hasTabs && (
                     <div className="flex items-end gap-1 overflow-x-auto px-4 scrollbar-none">
                         {tabs.map((tab) => {
@@ -244,7 +296,6 @@ export default function AuthenticatedLayout({ header, tabs, activeTab, onTabChan
                                 <>
                                     {Icon && <Icon className="h-4 w-4" />}
                                     {tab.label}
-                                    {/* Active underline */}
                                     <span
                                         className={`absolute bottom-0 left-0 h-0.5 w-full rounded-t-full transition-colors ${
                                             active ? 'bg-indigo-500' : 'bg-transparent group-hover:bg-gray-200'
@@ -253,9 +304,7 @@ export default function AuthenticatedLayout({ header, tabs, activeTab, onTabChan
                                 </>
                             );
 
-                            // Render as <Link> when an href is provided, otherwise <button>
                             return tab.href ? (
-
                                 <Link
                                     key={tab.id}
                                     href={tab.href}
@@ -263,9 +312,7 @@ export default function AuthenticatedLayout({ header, tabs, activeTab, onTabChan
                                 >
                                     {inner}
                                 </Link>
-
                             ) : (
-
                                 <button
                                     key={tab.id}
                                     type="button"
@@ -274,7 +321,6 @@ export default function AuthenticatedLayout({ header, tabs, activeTab, onTabChan
                                 >
                                     {inner}
                                 </button>
-                                
                             );
                         })}
                     </div>
@@ -282,11 +328,10 @@ export default function AuthenticatedLayout({ header, tabs, activeTab, onTabChan
             </nav>
 
             {/* ── Main content ────────────────────────────────────────────── */}
-            {/*
-                When tabs are present the nav is taller (64 px header + ~44 px tabs = ~108 px).
-                We compensate with extra top padding so content never hides behind the nav.
-            */}
-            <div className={`lg:pl-64 ${hasTabs ? 'pt-[108px]' : 'pt-16'}`}>
+            <div
+                style={{ paddingTop: totalOffset }}
+                className="lg:pl-64"
+            >
                 <main className="p-4">{children}</main>
             </div>
         </div>

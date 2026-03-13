@@ -1,5 +1,6 @@
-import { router } from "@inertiajs/react";
+import { router, Head } from "@inertiajs/react";
 import { useState } from "react";
+import axios from "axios";
 
 function formatDate(iso) {
   return new Date(iso).toLocaleDateString("en-US", {
@@ -35,15 +36,20 @@ function Avatar({ name }) {
 }
 
 function ImpersonateModal({ user, org, onClose }) {
-  const [loading, setLoading] = useState(false);
-  const [done, setDone] = useState(false);
 
-  const handleConfirm = () => {
+  const [loading, setLoading] = useState(false);
+
+  const handleConfirm = async () => {
+
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      setDone(true);
-    }, 1500);
+
+    const { data } = await axios.post(`/admin/impersonate/${user.id}`)
+
+    router.get(data?.url,{},{
+
+        onFinish: () => setLoading(false)
+    })
+
   };
 
   return (
@@ -56,27 +62,8 @@ function ImpersonateModal({ user, org, onClose }) {
         {/* Accent bar */}
         <div className="absolute top-0 left-8 right-8 h-px bg-gradient-to-r from-transparent via-violet-500 to-transparent" />
 
-        {done ? (
-          <div className="text-center py-4">
-            <div className="w-16 h-16 bg-emerald-500/10 border border-emerald-500/30 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-            </div>
-            <p className="text-white font-semibold text-lg">Session Started</p>
-            <p className="text-zinc-400 text-sm mt-1">
-              Now impersonating <span className="text-violet-400">{user.name}</span>
-            </p>
-            <button
-              onClick={onClose}
-              className="mt-6 w-full py-2.5 rounded-xl bg-white/5 border border-white/10 text-zinc-300 hover:bg-white/10 transition-colors text-sm"
-            >
-              Close
-            </button>
-          </div>
-        ) : (
-          <>
-            <div className="flex items-center gap-3 mb-6">
+        
+        <div className="flex items-center gap-3 mb-6">
               <div className="w-10 h-10 bg-amber-500/10 border border-amber-500/30 rounded-xl flex items-center justify-center">
                 <svg className="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
@@ -132,9 +119,8 @@ function ImpersonateModal({ user, org, onClose }) {
                   "Confirm"
                 )}
               </button>
-            </div>
-          </>
-        )}
+        </div>
+        
       </div>
     </div>
   );
@@ -551,7 +537,7 @@ function OrgCard({ org }) {
 }
 
 function LogoutModal({ onClose }) {
-    
+
   const [loading, setLoading] = useState(false);
 
   const handleLogout =  () => {
@@ -622,120 +608,125 @@ export default function SuperAdminDashboard({ organizations }) {
   const totalUsers = organizations.reduce((sum, o) => sum + o.users.length, 0);
 
   return (
-    <div className="min-h-screen bg-[#080a0e] text-white" style={{ fontFamily: "'DM Sans', sans-serif" }}>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Mono:wght@400;500&display=swap');
-        * { box-sizing: border-box; }
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #ffffff15; border-radius: 3px; }
-      `}</style>
 
-      {/* Navbar */}
-      <nav className="sticky top-0 z-40 border-b border-white/[0.06] bg-[#080a0e]/80 backdrop-blur-xl">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center">
-              <svg className="w-3.5 h-3.5 text-white" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
-              </svg>
-            </div>
-            <span className="font-semibold text-sm tracking-tight">Super Admin</span>
-            <span className="hidden sm:block text-zinc-700 text-sm">/</span>
-            <span className="hidden sm:block text-zinc-500 text-sm">Dashboard</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-3 py-1">
-              <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
-              <span className="text-emerald-400 text-xs font-medium">Live</span>
-            </div>
-            <div className="w-px h-4 bg-white/10" />
-            <button
-              onClick={() => setLogoutModal(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/5 border border-transparent hover:border-white/10 transition-all text-xs font-medium"
-            >
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-              </svg>
-              <span className="hidden sm:inline">Logout</span>
-            </button>
-          </div>
+    <>
+        <Head title="super" />
+
+        <div className="min-h-screen bg-[#080a0e] text-white" style={{ fontFamily: "'DM Sans', sans-serif" }}>
+            <style>{`
+                @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Mono:wght@400;500&display=swap');
+                * { box-sizing: border-box; }
+                ::-webkit-scrollbar { width: 6px; }
+                ::-webkit-scrollbar-track { background: transparent; }
+                ::-webkit-scrollbar-thumb { background: #ffffff15; border-radius: 3px; }
+            `}</style>
+
+            {/* Navbar */}
+            <nav className="sticky top-0 z-40 border-b border-white/[0.06] bg-[#080a0e]/80 backdrop-blur-xl">
+                <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                    <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center">
+                    <svg className="w-3.5 h-3.5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
+                    </svg>
+                    </div>
+                    <span className="font-semibold text-sm tracking-tight">Super Admin</span>
+                    <span className="hidden sm:block text-zinc-700 text-sm">/</span>
+                    <span className="hidden sm:block text-zinc-500 text-sm">Dashboard</span>
+                </div>
+                <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-3 py-1">
+                    <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
+                    <span className="text-emerald-400 text-xs font-medium">Live</span>
+                    </div>
+                    <div className="w-px h-4 bg-white/10" />
+                    <button
+                    onClick={() => setLogoutModal(true)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/5 border border-transparent hover:border-white/10 transition-all text-xs font-medium"
+                    >
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
+                    <span className="hidden sm:inline">Logout</span>
+                    </button>
+                </div>
+                </div>
+            </nav>
+
+            {/* Main content */}
+            <main className="max-w-5xl mx-auto px-4 sm:px-6 py-10">
+                {/* Page header */}
+                <div className="mb-8">
+                <h1 className="text-2xl font-bold tracking-tight text-white">Organizations</h1>
+                <p className="text-zinc-500 text-sm mt-1">
+                    Manage tenant organizations and impersonate users for support.
+                </p>
+                </div>
+
+                {/* Stats row */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-8">
+                {[
+                    {
+                    label: "Total Orgs",
+                    value: organizations.length,
+                    icon: (
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                    ),
+                    color: "violet",
+                    },
+                    {
+                    label: "Total Users",
+                    value: totalUsers,
+                    icon: (
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                    ),
+                    color: "cyan",
+                    },
+                    {
+                    label: "Avg Users / Org",
+                    value: organizations.length ? (totalUsers / organizations.length).toFixed(1) : 0,
+                    icon: (
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    ),
+                    color: "emerald",
+                    },
+                ].map((stat) => (
+                    <div
+                    key={stat.label}
+                    className="bg-[#0f1117] border border-white/[0.07] rounded-xl p-4 flex items-center gap-3"
+                    >
+                    <div className={`w-9 h-9 rounded-lg bg-${stat.color}-500/10 border border-${stat.color}-500/20 flex items-center justify-center flex-shrink-0`}>
+                        <svg className={`w-4.5 h-4.5 text-${stat.color}-400`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        {stat.icon}
+                        </svg>
+                    </div>
+                    <div>
+                        <p className="text-white font-bold text-xl leading-none">{stat.value}</p>
+                        <p className="text-zinc-500 text-xs mt-1">{stat.label}</p>
+                    </div>
+                    </div>
+                ))}
+                </div>
+
+                {/* Org cards */}
+                <div className="space-y-4">
+                {organizations.map((org) => (
+                    <OrgCard key={org.id} org={org} />
+                ))}
+                </div>
+
+                {organizations.length === 0 && (
+                <div className="text-center py-24 text-zinc-600">
+                    <svg className="w-12 h-12 mx-auto mb-3 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16" />
+                    </svg>
+                    <p className="text-sm">No organizations found.</p>
+                </div>
+                )}
+            </main>
+
+            {logoutModal && <LogoutModal onClose={() => setLogoutModal(false)} />}
         </div>
-      </nav>
-
-      {/* Main content */}
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-10">
-        {/* Page header */}
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold tracking-tight text-white">Organizations</h1>
-          <p className="text-zinc-500 text-sm mt-1">
-            Manage tenant organizations and impersonate users for support.
-          </p>
-        </div>
-
-        {/* Stats row */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-8">
-          {[
-            {
-              label: "Total Orgs",
-              value: organizations.length,
-              icon: (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-              ),
-              color: "violet",
-            },
-            {
-              label: "Total Users",
-              value: totalUsers,
-              icon: (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-              ),
-              color: "cyan",
-            },
-            {
-              label: "Avg Users / Org",
-              value: organizations.length ? (totalUsers / organizations.length).toFixed(1) : 0,
-              icon: (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-              ),
-              color: "emerald",
-            },
-          ].map((stat) => (
-            <div
-              key={stat.label}
-              className="bg-[#0f1117] border border-white/[0.07] rounded-xl p-4 flex items-center gap-3"
-            >
-              <div className={`w-9 h-9 rounded-lg bg-${stat.color}-500/10 border border-${stat.color}-500/20 flex items-center justify-center flex-shrink-0`}>
-                <svg className={`w-4.5 h-4.5 text-${stat.color}-400`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  {stat.icon}
-                </svg>
-              </div>
-              <div>
-                <p className="text-white font-bold text-xl leading-none">{stat.value}</p>
-                <p className="text-zinc-500 text-xs mt-1">{stat.label}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Org cards */}
-        <div className="space-y-4">
-          {organizations.map((org) => (
-            <OrgCard key={org.id} org={org} />
-          ))}
-        </div>
-
-        {organizations.length === 0 && (
-          <div className="text-center py-24 text-zinc-600">
-            <svg className="w-12 h-12 mx-auto mb-3 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16" />
-            </svg>
-            <p className="text-sm">No organizations found.</p>
-          </div>
-        )}
-      </main>
-
-      {logoutModal && <LogoutModal onClose={() => setLogoutModal(false)} />}
-    </div>
+    </>
   );
 }

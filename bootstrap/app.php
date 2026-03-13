@@ -21,6 +21,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'org' => \App\Http\Middleware\SetOrganizationContext::class,
             'role' => RoleMiddleware::class,
+            'impersonation' => App\Http\Middleware\ImpersonationMiddleware::class,
             'permission' => PermissionMiddleware::class,
             'role_or_permission' => RoleOrPermissionMiddleware::class,
         ]);

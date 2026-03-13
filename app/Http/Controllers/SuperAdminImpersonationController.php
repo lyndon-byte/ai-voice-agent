@@ -25,7 +25,9 @@ class SuperAdminImpersonationController extends Controller
         ]);
 
         return response()->json([
-            'url' => url('/impersonate/'.$token->token)
+
+            'url' => "/impersonate/". $token->token
+            
         ]);
     }
 

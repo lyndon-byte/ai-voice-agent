@@ -10,7 +10,9 @@ class SuperAdminDashboardController extends Controller
 {
     public function index(Request $request){
         
-        $organizations = Organization::with('users')->get();
+        $organizations = Organization::with('users')
+            ->where('domain', '!=', 'system.local')
+            ->get();
 
         return Inertia::render('SuperAdminDashboard',[
 
