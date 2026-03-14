@@ -29,6 +29,8 @@ Route::get('/', function () {
 
 Route::middleware(['auth','org','role:system'])->group(function () {
     
+    // deactivate all agents at once that belongs to a certain organization
+    Route::post('/admin/switch-agents',[SuperAdminDashboardController::class,'agentsSwitch']);
     Route::get('/admin/dashboard',[SuperAdminDashboardController::class,'index'])->name('system.admin.dashboard');
     Route::post('/admin/impersonate/{user}',[SuperAdminImpersonationController::class,'createToken']);
     Route::get('/impersonate/{token}',[SuperAdminImpersonationController::class,'login']);
@@ -95,6 +97,11 @@ Route::middleware(['auth','verified','org','role:owner'])->group(function () {
     Route::post('/app/import-twilio-phone-number',[PhoneNumbersController::class, 'importTwilioPhoneNumber']);
     Route::post('/app/update-phone-number',[PhoneNumbersController::class, 'update']);
 
+    Route::get('/app/outbound',function() {
+
+        return Inertia::render('OutboundCalls');
+
+    })->name('outbound');
 
 });
 

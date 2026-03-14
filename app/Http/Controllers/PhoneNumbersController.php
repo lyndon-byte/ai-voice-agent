@@ -47,6 +47,15 @@ class PhoneNumbersController extends Controller
             $sid = config('services.twilio.sid');
             $token = config('services.twilio.auth_token');
 
+            $purchase = $this->purchaseTwilioNumber($validated['phone_number']);
+
+            if (!$purchase) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to purchase Twilio phone number.'
+                ], 500);
+            }
+
         } else {
 
             $sid = $validated['sid'];
@@ -415,31 +424,28 @@ class PhoneNumbersController extends Controller
         }
     }
 
-    public function buySystemPhoneNumber(Request $request)
+    private function purchaseTwilioNumber($phoneNumber)
     {
-
-        $validated = $request->validate([
-
-            'phone_number' => 'required|string'
-            
-        ]);
-
         $sid = config('services.twilio.sid');
         $token = config('services.twilio.auth_token');
-        
-        $response = Http::withBasicAuth(
-            $sid,
-            $token
-        )->asForm()->post(
-            "https://api.twilio.com/2010-04-01/Accounts/{$sid}/IncomingPhoneNumbers.json",
-            [
-                'PhoneNumber' => $validated['phone_number']
-            ]
-        );
-        
-        $data = $response->json();
 
-        return $response->json($data);
+        $response = Http::withBasicAuth($sid, $token)
+            ->asForm()
+            ->post("https://api.twilio.com/2010-04-01/Accounts/{$sid}/IncomingPhoneNumbers.json", [
+                'PhoneNumber' => $phoneNumber
+            ]);
+
+        if (!$response->successful()) {
+
+            Log::error('Twilio purchase failed', [
+                'phone_number' => $phoneNumber,
+                'response' => $response->json()
+            ]);
+
+            return false;
+        }
+
+        return $response->json();
     }
 
     // update phone number (edit label, add or remove agent)
@@ -510,9 +516,5 @@ class PhoneNumbersController extends Controller
         ], 200);
     }
 
-    public function getPhoneNumberDetails(Request $request)
-    {
-
-
-    }
+   
 }

@@ -7,7 +7,7 @@ use Spatie\Multitenancy\Models\Tenant;
 class Organization extends Tenant
 {
     protected $table = 'tenants';
-    protected $fillable = ['name','domain','database','active'];
+    protected $fillable = ['name','domain','database','active','super_admin_note'];
 
     public function users(){
 

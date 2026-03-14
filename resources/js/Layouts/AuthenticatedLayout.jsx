@@ -20,6 +20,8 @@ export default function AuthenticatedLayout({ header, tabs, activeTab, onTabChan
     const { auth, impersonated_by } = usePage().props;
     
     const user = auth.user;
+    const organization = auth.organization;
+    const isOrgDisabled = organization && organization.active === false;
 
     const { component } = usePage()
     
@@ -44,14 +46,14 @@ export default function AuthenticatedLayout({ header, tabs, activeTab, onTabChan
     const hasTabs = Array.isArray(tabs) && tabs.length > 0;
 
     const handleLeaveImpersonation = () => {
-        
         router.post('/impersonate/leave')
-        
     };
 
-    const bannerHeight = impersonated_by ? 40 : 0;
-    const navHeight = hasTabs ? 108 : 64;
-    const totalOffset = bannerHeight + navHeight;
+    const impersonationBannerHeight = impersonated_by ? 40 : 0;
+    const orgDisabledBannerHeight   = isOrgDisabled    ? 48 : 0;
+    const bannerHeight  = impersonationBannerHeight + orgDisabledBannerHeight;
+    const navHeight     = hasTabs ? 108 : 64;
+    const totalOffset   = bannerHeight + navHeight;
 
     return (
         <div className="min-h-screen bg-gray-100">
@@ -62,9 +64,11 @@ export default function AuthenticatedLayout({ header, tabs, activeTab, onTabChan
                     <div className="flex items-center gap-2 text-sm font-medium text-amber-950">
                         <ShieldAlert className="h-4 w-4 shrink-0" />
                         <span>
-                            impersonating{' '}
+                            You are impersonating{' '}
                             <span className="font-bold">{user.name}</span>
                             {' '}({user.email})
+                            {' '}— logged in as{' '}
+                            <span className="font-bold">{impersonated_by.name}</span>
                         </span>
                     </div>
                     <button
@@ -74,6 +78,22 @@ export default function AuthenticatedLayout({ header, tabs, activeTab, onTabChan
                         <LogOut className="h-3.5 w-3.5" />
                         Leave Impersonation
                     </button>
+                </div>
+            )}
+
+            {/* ── Account Disabled Banner ───────────────────────────────── */}
+            {isOrgDisabled && (
+                <div
+                    style={{ top: impersonationBannerHeight }}
+                className="fixed left-0 right-0 z-50 flex min-h-[60px] items-center gap-3 bg-red-600 px-4 py-2 shadow-md"
+                >
+                    <ShieldAlert className="h-4 w-4 shrink-0 text-red-100" />
+                    <div className="flex flex-col text-sm text-red-50">
+                        <span className="font-semibold">All agents are currently disabled for this account. You still have access to modify or update your agents, but they cannot be contacted.</span>
+                        {organization.super_admin_note && (
+                             <span className="text-red-200">Reason: {organization.super_admin_note}</span>
+                        )}
+                    </div>
                 </div>
             )}
 
@@ -173,7 +193,14 @@ export default function AuthenticatedLayout({ header, tabs, activeTab, onTabChan
                         </li>
 
                         <li>
-                            <Link href="" className="flex items-center rounded-lg p-2 text-gray-900 transition-colors hover:bg-gray-100">
+                            <Link 
+                                href={route('outbound')}
+                                className={`flex items-center rounded-lg p-2 text-gray-900 transition-colors
+                                ${route().current('outbound')
+                                    ? 'bg-gray-100 text-gray-900'
+                                    : 'text-gray-900 hover:bg-gray-100'
+                                }`}
+                            >
                                 <Send className="h-5 w-5 text-gray-500" />
                                 <span className="ms-3 flex items-center">Outbound</span>
                             </Link>
@@ -262,7 +289,6 @@ export default function AuthenticatedLayout({ header, tabs, activeTab, onTabChan
                                 </div>
                                 <div className="border-t border-gray-100" />
                                 {impersonated_by ? (
-
                                     <div
                                         title="Cannot log out while impersonating a user"
                                         className="flex w-full cursor-not-allowed items-center px-4 py-2 text-left text-sm text-gray-300 select-none"
@@ -270,9 +296,7 @@ export default function AuthenticatedLayout({ header, tabs, activeTab, onTabChan
                                         <span>Log Out</span>
                                         <span className="ml-auto text-xs text-amber-400">(impersonating)</span>
                                     </div>
-
                                 ) : (
-
                                     <Dropdown.Link href={route('logout')} method="post" as="button">Log Out</Dropdown.Link>
                                 )}
                             </Dropdown.Content>

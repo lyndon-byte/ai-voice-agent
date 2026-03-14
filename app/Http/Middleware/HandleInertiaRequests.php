@@ -33,6 +33,7 @@ class HandleInertiaRequests extends Middleware
             ...parent::share($request),
             'auth' => [
                 'user' => $request->user(),
+                'organization' => $request->user()->organization ?? null
             ],
             'impersonated_by' => $request->session()->get('impersonated_by')
         ];

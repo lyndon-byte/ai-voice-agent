@@ -451,6 +451,8 @@ function SystemNumbersModal({ open, onClose }) {
   const [numbers, setNumbers] = useState([]);
   const [type,setType] = useState('');
   const [loading, setLoading] = useState(false);
+  const [buttonLoading, setButtonLoading] = useState(false);
+  const [error, setError] = useState("");
   const debounceRef = useRef(null);
   
   // Fetch whenever modal opens or filters change
@@ -481,13 +483,38 @@ function SystemNumbersModal({ open, onClose }) {
     return () => clearTimeout(debounceRef.current);
   }, [open, typeFilter, areaCode]);
 
-  // Reset local state when closed
+  const handleImport = async (selected) => {
+
+    setButtonLoading(true);
+    setError("");
+ 
+     try {
+
+      await axios.post("/app/import-twilio-phone-number", {
+
+        label: label.trim(),
+        phone_number: selected?.phone_number,
+        source: "system",
+       
+      });
+
+      onClose();
+      setLabel("");
+
+    } catch (err) {
+      setError(err?.response?.data?.message ?? "Something went wrong. Please try again.");
+    } finally {
+      setButtonLoading(false);
+    }
+  }
+
   const handleClose = () => {
     setLabel("");
     setSelected(null);
     setTypeFilter("");
     setAreaCode("");
     setNumbers([]);
+    setError("");
     onClose();
   };
 
@@ -609,21 +636,32 @@ function SystemNumbersModal({ open, onClose }) {
               ))}
             </div>
 
+            {error && (
+              <div className="px-6 py-2 text-xs text-red-600 bg-red-50 border-t border-red-100">
+                {error}
+              </div>
+            )}
+
             {/* Footer */}
             <div className="px-6 py-4 border-t border-gray-100 flex gap-3">
               <button onClick={handleClose} className="flex-1 border border-gray-200 text-sm text-gray-700 font-medium py-2.5 rounded-lg hover:bg-gray-50 transition-colors">
                 Cancel
               </button>
               <button
-                disabled={!selected || !label}
-                onClick={() => console.log(selected)}
-                className={`flex-1 text-sm font-medium py-2.5 rounded-lg transition-colors ${
-                  selected && label
+                disabled={!selected || !label || buttonLoading}
+                onClick={() => handleImport(selected)}
+                className={`flex-1 text-sm font-medium py-2.5 rounded-lg transition-colors flex items-center justify-center gap-2 ${
+                  selected && label && !buttonLoading
                     ? "bg-gray-900 text-white hover:bg-gray-700"
                     : "bg-gray-200 text-gray-400 cursor-not-allowed"
                 }`}
               >
-                Add Number
+                {buttonLoading && (
+                  <svg className="animate-spin" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" strokeLinecap="round"/>
+                  </svg>
+                )}
+                {buttonLoading ? "Adding…" : "Add Number"}
               </button>
             </div>
 
