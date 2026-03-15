@@ -9,6 +9,7 @@ import axios from 'axios';
 import { useAgentChanges } from '@/Contexts/AgentChangesContext';
 import Portal from '../Shared/Portal';
 
+
 // ─── Status badge config ────────────────────────────────────────────────────
 const STATUS_CONFIG = {
     initiated:     { className: 'bg-slate-100 text-slate-600 ring-1 ring-slate-200',      dot: 'bg-slate-400' },
@@ -46,30 +47,87 @@ function formatCost(n) {
     return `$${Number(n).toFixed(5)}`;
 }
 
+
 // ─── Waveform (decorative bars) ─────────────────────────────────────────────
-function Waveform({ progress = 0 }) {
-    const bars = 90;
+function Waveform({ isPlaying = false  }) {
+
+    const BARS = 90;
+
+    const baseProfile = Array.from({ length: BARS }, (_, i) =>
+    Math.max(4, Math.abs(Math.sin(i * 0.47) * 55 + Math.cos(i * 0.28) * 18))
+    );
+    const idleHeights = baseProfile.map(h => Math.max(3, h * 0.12));
+
+    const barsRef = useRef([]);
+    const rafId = useRef(null);
+    const current = useRef([...idleHeights]);
+    const target = useRef([...idleHeights]);
+    const tick = useRef(0);
+  
+    const setHeights = () => {
+      current.current.forEach((h, i) => {
+        if (barsRef.current[i]) {
+          barsRef.current[i].style.height = Math.max(3, h) + "px";
+        }
+      });
+    };
+  
+    useEffect(() => {
+      cancelAnimationFrame(rafId.current);
+  
+      if (isPlaying) {
+        const randomTargets = () => {
+          target.current = baseProfile.map(h =>
+            Math.max(4, h * (0.3 + Math.random() * 0.9))
+          );
+        };
+  
+        const animate = () => {
+          if (tick.current % 8 === 0) randomTargets();
+          tick.current++;
+          current.current = current.current.map((h, i) => h + (target.current[i] - h) * 0.25);
+          setHeights();
+          rafId.current = requestAnimationFrame(animate);
+        };
+  
+        randomTargets();
+        animate();
+      } else {
+        const fadeToIdle = () => {
+          const done = current.current.every((h, i) => Math.abs(h - idleHeights[i]) < 0.5);
+          if (done) {
+            current.current = [...idleHeights];
+            setHeights();
+            return;
+          }
+          current.current = current.current.map((h, i) => h + (idleHeights[i] - h) * 0.12);
+          setHeights();
+          rafId.current = requestAnimationFrame(fadeToIdle);
+        };
+  
+        fadeToIdle();
+      }
+  
+      return () => cancelAnimationFrame(rafId.current);
+    }, [isPlaying]); // ← reacts to actual play state, not progress value
+  
     return (
-        <div className="flex h-16 w-full items-center gap-px overflow-hidden">
-            {Array.from({ length: bars }).map((_, i) => {
-                const h = 15 + Math.abs(Math.sin(i * 0.47) * 60 + Math.cos(i * 0.28) * 22);
-                const filled = (i / bars) * 100 < progress;
-                return (
-                    <div
-                        key={i}
-                        style={{ height: `${h}%` }}
-                        className={`w-full flex-1 rounded-[1px] transition-colors duration-75 ${
-                            filled ? 'bg-gray-800' : 'bg-gray-200'
-                        }`}
-                    />
-                );
-            })}
-        </div>
+      <div className="flex h-16 w-full items-center gap-px">
+        {Array.from({ length: BARS }).map((_, i) => (
+          <div
+            key={i}
+            ref={el => (barsRef.current[i] = el)}
+            className="flex-1 min-w-0 rounded-sm bg-gray-900"
+            style={{ height: idleHeights[i] + "px" }}
+          />
+        ))}
+      </div>
     );
 }
 
 // ─── Audio Player ───────────────────────────────────────────────────────────
 function AudioPlayer({ conversationId }) {
+
     const audioRef = useRef(null);
     const [playing,  setPlaying]  = useState(false);
     const [progress, setProgress] = useState(0);
@@ -126,16 +184,13 @@ function AudioPlayer({ conversationId }) {
                 onLoadedMetadata={e => setDuration(e.target.duration)}
                 onEnded={() => { setPlaying(false); setProgress(100); }}
             />
-            <Waveform progress={progress} />
+            <Waveform progress={progress} isPlaying={playing} />
             <div className="mt-3 flex items-center gap-3">
                 <button onClick={togglePlay} disabled={loading} className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-gray-900 text-white shadow-sm transition-colors hover:bg-gray-700 disabled:opacity-50">
-                    {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : playing ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4 translate-x-0.5" />}
+                    {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : playing ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4 " />}
                 </button>
                 <button onClick={cycleSpeed} className="w-11 rounded-md bg-gray-100 py-1 text-xs font-bold text-gray-700 hover:bg-gray-200">{speed}x</button>
-                <button onClick={() => skip(-10)} className="text-gray-400 hover:text-gray-700"><RotateCcw className="h-4 w-4" /></button>
-                <button onClick={() => skip(10)}  className="text-gray-400 hover:text-gray-700"><RotateCw  className="h-4 w-4" /></button>
                 <span className="ml-auto text-xs tabular-nums text-gray-500">{formatDuration(current)} / {formatDuration(duration)}</span>
-                <button className="text-gray-400 hover:text-gray-600"><MoreHorizontal className="h-4 w-4" /></button>
             </div>
             {error && <p className="mt-2 text-xs text-red-500">{error}</p>}
         </div>
@@ -185,7 +240,7 @@ function OverviewTab({ detail }) {
     const analysis = detail?.analysis ?? {};
     const meta     = detail?.metadata ?? {};
     const rows = [
-        { label: 'Call status',        value: <CallSuccessBadge value={analysis.call_successful} />, refresh: true },
+        { label: 'Call status',        value: <CallSuccessBadge value={analysis.call_successful} />},
         { label: 'How the call ended', value: meta.termination_reason ?? '—' },
         { label: 'User ID',            value: detail?.user_id ?? '—' },
     ];
@@ -309,10 +364,10 @@ function MetadataPanel({ detail }) {
                 {rows.map(({ label, value, sub }) => (
                     <div key={label} className="py-3">
                         <div className="flex items-start justify-between gap-2">
-                            <span className="text-xs text-gray-500">{label}</span>
-                            <span className="text-right text-xs font-semibold text-gray-800">{value}</span>
+                            <span className="text-sm text-gray-500">{label}</span>
+                            <span className="text-right text-sm font-semibold text-gray-800">{value}</span>
                         </div>
-                        {sub && <p className="mt-0.5 text-right text-[11px] text-gray-400">{sub}</p>}
+                        {sub && <p className="mt-0.5 text-right text-xs text-gray-400">{sub}</p>}
                     </div>
                 ))}
             </div>
@@ -378,12 +433,7 @@ function ConversationDrawer({ conversation, onClose }) {
                         <div className="flex flex-1 flex-col overflow-hidden">
                             <div className="flex-1 overflow-y-auto px-6 pt-5 pb-8">
                                 <AudioPlayer conversationId={conversationId} />
-                                <div className="mb-5 flex items-start gap-3 rounded-xl border border-blue-100 bg-blue-50 px-4 py-3">
-                                    <Info className="mt-0.5 h-4 w-4 flex-shrink-0 text-blue-500" />
-                                    <p className="text-xs leading-relaxed text-blue-700">
-                                        You can now ensure your agent returns high quality responses to conversations like this one. Try Tests in the Transcription tab.
-                                    </p>
-                                </div>
+                                
                                 <div className="mb-5 border-b border-gray-200">
                                     <div className="flex gap-0.5">
                                         {tabs.map(({ key, label }) => (

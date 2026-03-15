@@ -203,7 +203,7 @@ export default function ConfigurationTab({ config, currentVoice }) {
     const [showLanguageModal, setShowLanguageModal] = useState(false);
 
     const [selectedVoice, setSelectedVoice] = useState(
-        { voice_id: null, name: currentVoice.name }
+        { voice_id: currentVoice.voice_id, name: currentVoice.name }
     );
     const [showVoiceDrawer, setShowVoiceDrawer] = useState(false);
 

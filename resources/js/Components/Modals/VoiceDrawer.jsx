@@ -264,7 +264,7 @@ export default function VoiceDrawer({ isOpen, onClose, onSelect, currentVoice })
                                                 {[voice.category, voice.gender, voice.age].filter(Boolean).map((tag) => (
                                                     <span
                                                         key={tag}
-                                                        className={`rounded-md px-1.5 py-0.5 text-[10px] font-medium leading-none
+                                                        className={`rounded-md px-1.5 py-0.5 text-xs font-medium leading-none
                                                             ${isSelected ? 'bg-white/10 text-white/70' : tagColor(tag)}`}
                                                     >
                                                         {tag}

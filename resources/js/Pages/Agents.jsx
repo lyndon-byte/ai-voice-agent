@@ -105,7 +105,7 @@ function Pagination({ data }) {
     return (
         <div className="flex items-center justify-between px-1 py-4">
             {/* Info */}
-            <p className="text-xs text-gray-400">
+            <p className="text-sm text-gray-400">
                 Showing <span className="font-medium text-gray-600">{from}–{to}</span> of{' '}
                 <span className="font-medium text-gray-600">{total}</span> agents
             </p>

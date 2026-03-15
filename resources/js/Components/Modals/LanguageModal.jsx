@@ -6,7 +6,7 @@ export default function LanguageModal({ isOpen, onClose, onSelect, currentLangua
 
     const languages = [
         { code: 'en', name: 'English', flag: '🇺🇸', isDefault: true },
-        { code: 'fil', name: 'Filipino', flag: '🇵🇭', isDefault: false },
+        // { code: 'fil', name: 'Filipino', flag: '🇵🇭', isDefault: false },
     ];
 
     return (

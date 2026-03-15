@@ -103,6 +103,7 @@ Route::middleware(['auth','verified','org','role:owner'])->group(function () {
 
     })->name('outbound');
 
+
 });
 
 Route::post('/receive-webhook',[WorkSpaceController::class, 'receiveWebhook']);

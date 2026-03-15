@@ -35,6 +35,10 @@ export default function Agent({ agent,currentVoice,localKb,currentTab }) {
     const config = agent?.conversation_config;
     const platformSettings = agent?.platform_settings;
 
+    const phoneNumber = agent?.phone_numbers
+        ?.find(pn => pn?.phone_number)
+        ?.phone_number ?? null;
+
     const handleReset = () => {
 
         router.get(`${rootUrl}=${activeTab}`);
@@ -51,9 +55,16 @@ export default function Agent({ agent,currentVoice,localKb,currentTab }) {
                 <AuthenticatedLayout
                     header={  
                         <div>
-                            <h1 className="text-lg font-bold text-gray-900 sm:text-xl">
-                                {agent?.name}
-                            </h1>
+                            <div className="flex items-center gap-2">
+                                <h1 className="text-lg font-bold text-gray-900 sm:text-xl">
+                                    {agent?.name}
+                                </h1>
+                                {phoneNumber && (
+                                    <span className="inline-flex items-center rounded-full bg-gray-50 px-3 py-0.5 text-sm font-medium text-gray-700 ring-1 ring-inset ring-blue-700/10">
+                                        +{phoneNumber}
+                                    </span>
+                                )}
+                            </div>
                             <p className="mt-0.5 text-xs text-gray-500">
                                 ID: {agent?.agent_id}
                             </p>
@@ -71,9 +82,9 @@ export default function Agent({ agent,currentVoice,localKb,currentTab }) {
                         <div className="space-y-4 mt-10">
                             {activeTab === 'configuration' && (
                                 <ConfigurationTab 
-                                agent={agent} 
-                                config={config} 
-                                currentVoice={currentVoice}
+                                    agent={agent} 
+                                    config={config} 
+                                    currentVoice={currentVoice}
                                 />
                             )}
                             
