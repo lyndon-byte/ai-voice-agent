@@ -50,5 +50,10 @@ class Organization extends Tenant
         return $this->hasMany(ReceivedCalls::class);
     }
 
+    public function postCallNotificationReceivers(){
+
+        return $this->hasMany(PostCallEmailNotificationReceivers::class);
+    }
+
 
 }

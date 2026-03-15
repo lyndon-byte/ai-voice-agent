@@ -90,6 +90,12 @@ Route::middleware(['auth','verified','org','role:owner'])->group(function () {
     Route::post('/app/delete-webhook',[WorkSpaceController::class, 'deleteWebhook']);
     Route::get('/app/get-secrets',[WorkSpaceController::class, 'secrets']);
     Route::post('/app/create-secret',[WorkSpaceController::class, 'createSecret']);
+
+    Route::get('/app/post-call-email-notification-receivers',[WorkSpaceController::class, 'postCallEmailNotificationReceivers']);
+    Route::post('/app/add-post-call-email-notification-receiver',[WorkSpaceController::class, 'addPostCallEmailNotificationReceiver']);
+    Route::post('/app/remove-post-call-email-notification-receiver',[WorkSpaceController::class, 'removePostCallEmailNotificationReceiver']);
+
+
     
     Route::get('/app/phone-numbers',[PhoneNumbersController::class, 'index'])->name('numbers');
     Route::get('/app/available-numbers',[PhoneNumbersController::class, 'getAvailableNumbers'])->name('available.numbers');

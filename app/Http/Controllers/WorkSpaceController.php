@@ -170,6 +170,66 @@ class WorkSpaceController extends Controller
 
     }
 
+    public function addPostCallEmailNotificationReceiver(Request $request){
+
+        $user = auth()->user();
+        $org  = $user->organization;
+
+        $validated = $request->validate([
+            'emails' => 'required|array',
+            'emails.*' => 'email'
+        ]);
+
+        $org->postCallNotificationReceivers()->createMany(
+            collect($validated['emails'])->map(fn($email) => [
+                'email' => $email
+            ])->toArray()
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'successfully added receivers'
+        ], 200);
+    }
+
+    public function removePostCallEmailNotificationReceiver(Request $request){
+
+        $user = auth()->user();
+        $org  = $user->organization;
+
+        $validated = $request->validate([
+            'email' => 'required|email'
+        ]);
+
+        $receiver = $org->postCallNotificationReceivers()
+            ->where('email', $validated['email'])
+            ->first();
+
+        if (!$receiver) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Receiver not found'
+            ], 404);
+        }
+
+        $receiver->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Receiver deleted successfully'
+        ]);
+    }
+
+    public function postCallEmailNotificationReceivers(Request $request){
+
+        $org = auth()->user()->organization;
+
+        return response()->json([
+            'receivers' => $org->postCallNotificationReceivers()
+                ->pluck('email')
+        ]);
+    }
+
     public function secrets(Request $request)
     {
         $user = auth()->user();
