@@ -8,6 +8,7 @@ import { AgentChangesProvider } from '@/Contexts/Agentchangescontext';
 import UnsavedChangesBar from '@/Components/Unsavedchangesbar';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
+import { ElevenLabsProvider } from './Contexts/ElevenLabsProvider';
 
 createInertiaApp({
     title: (title) => `${title} - ${appName}`,
@@ -19,7 +20,11 @@ createInertiaApp({
     setup({ el, App, props }) {
         const root = createRoot(el);
 
-        root.render(<App {...props} />);
+        root.render(
+            <ElevenLabsProvider>
+                <App {...props} />
+            </ElevenLabsProvider>
+        );
     },
     progress: {
         color: '#4B5563',

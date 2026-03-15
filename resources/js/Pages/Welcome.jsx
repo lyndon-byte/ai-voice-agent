@@ -1,8 +1,19 @@
 import { Head, Link } from '@inertiajs/react';
 import ApplicationLogo from '@/Components/ApplicationLogo';
+import { useElevenLabs } from '@/Contexts/ElevenLabsProvider';
+import { useEffect } from 'react';
+import ElevenLabsWidget from '@/Components/ElevenLabsWidget';
 
 export default function Welcome({ auth, laravelVersion, phpVersion }) {
+     
+    const { agentId, setAgentId } = useElevenLabs()
+
+    useEffect(() => {
+        setAgentId(import.meta.env.VITE_LANDING_PAGE_AGENT_ID)
+    },[])
+
     return (
+        
         <>
             <Head title="TalkingToEleven — AI Voice & Agent Platform" />
 
@@ -43,7 +54,6 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                     -webkit-backdrop-filter: blur(12px);
                 }
 
-                /* Nav logo: 32px tall */
                 .nav-logo { height: 32px; width: auto; display: block; }
 
                 .nav-links { display: flex; align-items: center; gap: 0.5rem; }
@@ -73,20 +83,169 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                     border-bottom: 1px solid var(--border);
                 }
 
+                .hero-inner {
+                    flex: 1;
+                    display: flex; align-items: stretch;
+                    overflow: hidden;
+                }
+
                 .hero-body {
                     flex: 1;
                     display: flex; flex-direction: column; justify-content: center;
                     padding: 5rem 2.5rem 3rem;
-                    max-width: 860px;
+                    max-width: 640px;
+                    min-width: 0;
                 }
 
-                /* Hero logo: 56px tall */
-                .hero-logo {
-                    height: 56px; width: auto; display: block;
-                    margin-bottom: 3rem;
-                    opacity: 0; animation: fadeUp 0.5s ease 0.05s both;
+                /* ── ORB PANEL ── */
+                .hero-orb-panel {
+                    flex: 1;
+                    display: flex; align-items: center; justify-content: center;
+                    position: relative;
+                    overflow: hidden;
+                    border-left: 1px solid var(--border);
+                    background: var(--off);
                 }
 
+                /* subtle dot grid */
+                .hero-orb-panel::before {
+                    content: '';
+                    position: absolute; inset: 0;
+                    background-image: radial-gradient(circle, #d0d0d0 1px, transparent 1px);
+                    background-size: 28px 28px;
+                    opacity: 0.6;
+                }
+
+                /* top-right gradient bleed */
+                .hero-orb-panel::after {
+                    content: '';
+                    position: absolute;
+                    top: -60px; right: -60px;
+                    width: 260px; height: 260px;
+                    border-radius: 50%;
+                    background: radial-gradient(circle, rgba(0,0,0,0.06) 0%, transparent 70%);
+                    pointer-events: none;
+                }
+
+                .orb-scene {
+                    position: relative; display: flex;
+                    align-items: center; justify-content: center;
+                    width: 280px; height: 280px;
+                    z-index: 1;
+                }
+
+                /* ripple rings — 4 concentric */
+                .orb-ring {
+                    position: absolute; inset: 0;
+                    border-radius: 50%;
+                    border: 1px solid rgba(0,0,0,0.18);
+                    animation: orbRipple var(--ring-dur, 3.2s) ease-out infinite;
+                    animation-delay: var(--ring-delay, 0s);
+                    opacity: 0;
+                }
+                @keyframes orbRipple {
+                    0%   { transform: scale(0.42); opacity: 0.6; }
+                    100% { transform: scale(1);    opacity: 0; }
+                }
+
+                /* core orb */
+                .orb-core {
+                    width: 116px; height: 116px;
+                    border-radius: 50%;
+                    background: var(--black);
+                    position: relative; z-index: 2;
+                    display: flex; align-items: center; justify-content: center;
+                    animation: orbBreath 3.6s ease-in-out infinite;
+                    flex-shrink: 0;
+                    box-shadow:
+                        0 0 0 1px rgba(255,255,255,0.08),
+                        0 8px 40px rgba(0,0,0,0.22),
+                        0 2px 8px rgba(0,0,0,0.14),
+                        inset 0 1px 0 rgba(255,255,255,0.14);
+                }
+                @keyframes orbBreath {
+                    0%,100% {
+                        transform: scale(1);
+                        box-shadow: 0 0 0 1px rgba(255,255,255,0.08), 0 8px 40px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.14);
+                    }
+                    50% {
+                        transform: scale(1.07);
+                        box-shadow: 0 0 0 1px rgba(255,255,255,0.12), 0 12px 60px rgba(0,0,0,0.32), inset 0 1px 0 rgba(255,255,255,0.18);
+                    }
+                }
+
+                /* mic SVG inside orb */
+                .orb-mic-icon {
+                    width: 34px; height: 34px;
+                    animation: orbMicPulse 3.6s ease-in-out infinite;
+                }
+                @keyframes orbMicPulse {
+                    0%,100% { opacity: 0.5; transform: scale(1); }
+                    50%     { opacity: 1;   transform: scale(1.1); }
+                }
+
+                /* equaliser bars below orb */
+                .orb-eq {
+                    position: absolute;
+                    bottom: 18px; left: 50%;
+                    transform: translateX(-50%);
+                    display: flex; align-items: flex-end;
+                    gap: 3px; height: 40px;
+                    z-index: 1;
+                }
+                .orb-eq-bar {
+                    width: 3px; border-radius: 2px 2px 0 0;
+                    background: var(--black);
+                    animation: eqBar var(--eb-dur,1s) ease-in-out infinite alternate;
+                    animation-delay: var(--eb-delay,0s);
+                    height: var(--eb-base,5px);
+                    opacity: 0.2;
+                }
+                @keyframes eqBar {
+                    from { height: var(--eb-base,5px); opacity: 0.18; }
+                    to   { height: var(--eb-max,30px);  opacity: 0.85; }
+                }
+
+                /* "Listening…" status pill */
+                .orb-status {
+                    position: absolute; top: 24px; left: 50%;
+                    transform: translateX(-50%);
+                    display: flex; align-items: center; gap: 7px;
+                    background: var(--white); border: 1px solid var(--border);
+                    border-radius: 100px; padding: 0.3rem 0.9rem;
+                    font-size: 0.725rem; font-weight: 500; color: var(--muted);
+                    white-space: nowrap; z-index: 1;
+                    box-shadow: 0 1px 6px rgba(0,0,0,0.07);
+                    letter-spacing: 0.02em;
+                }
+                .orb-dot {
+                    width: 6px; height: 6px; border-radius: 50%;
+                    background: var(--black);
+                    animation: blink 2s step-end infinite;
+                }
+
+                /* latency tag bottom-right */
+                .orb-latency {
+                    position: absolute; bottom: 24px; right: 20px;
+                    font-size: 0.6875rem; color: #bbb; font-weight: 500;
+                    letter-spacing: 0.04em; z-index: 1;
+                }
+
+                @media (max-width: 1100px) {
+                    .orb-scene { width: 220px; height: 220px; }
+                    .orb-core  { width: 92px; height: 92px; }
+                }
+                @media (max-width: 768px) {
+                    .hero-inner { flex-direction: column; }
+                    .hero-body  { max-width: 100%; padding: 3.5rem 1.25rem 2.5rem; }
+                    .hero-orb-panel {
+                        width: 100%;
+                        border-left: none; border-top: 1px solid var(--border);
+                        height: 240px;
+                    }
+                }
+
+                /* hero label / title / desc / actions — same as before */
                 .hero-label {
                     font-size: 0.8125rem; font-weight: 500;
                     color: var(--muted); letter-spacing: 0.02em;
@@ -178,7 +337,7 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                 }
 
                 .wave-label {
-                    font-size: 0.75rem; color: #555; letter-spacing: 0.06em;
+                    font-size: 0.75rem; color: white; letter-spacing: 0.06em;
                     text-transform: uppercase; font-weight: 500;
                     display: flex; align-items: center; gap: 0.5rem;
                 }
@@ -496,7 +655,6 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                     border-top: 1px solid var(--border);
                 }
 
-                /* Footer logo: 22px tall */
                 .footer-logo { height: 22px; width: auto; display: block; }
 
                 .footer-links { display: flex; gap: 1.5rem; flex-wrap: wrap; }
@@ -513,7 +671,6 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                 @media (max-width: 768px) {
                     .nav { padding: 0 1.25rem; }
                     .nav-links .nav-link { display: none; }
-                    .hero-body { padding: 3.5rem 1.25rem 2.5rem; }
                     .hero-stat { padding: 1.5rem 1.25rem; }
                     .section { padding: 3.5rem 1.25rem; }
                     .wave-section { padding: 2.5rem 1.25rem; }
@@ -544,7 +701,7 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                     ) : (
                         <>
                             <Link href={route('login')}    className="nav-link">Log in</Link>
-                            <Link href={route('register')} className="nav-btn">Get started</Link>
+                            <Link href={route('register')} className="nav-btn">Get a Quote</Link>
                         </>
                     )}
                 </div>
@@ -552,30 +709,95 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
 
             {/* ── HERO ── */}
             <section className="hero">
-                <div className="hero-body">
-                    <div className="hero-label">
-                        <span className="live-dot" />
-                        Powered by ElevenLabs API · AI Voice &amp; Text Agents
+                <div className="hero-inner">
+
+                    {/* LEFT — copy */}
+                    <div className="hero-body">
+                        <div className="hero-label">
+                            <span className="live-dot" />
+                            Powered by ElevenLabs API · Agents
+                        </div>
+                        <h1 className="hero-title">
+                            Voice that thinks.<br />
+                            <span className="dim">Agents that act.</span>
+                        </h1>
+                        <p className="hero-desc">
+                            TalkingToEleven lets you deploy intelligent AI voice in minutes.
+                            Natural conversation, real-time responses, zero infrastructure overhead.
+                        </p>
+                        <p className="hero-desc">
+                         Free AI assistant setup for non-technical businesses.
+                        </p>
+
+                        <div className="hero-actions">
+                            {auth.user ? (
+                                <Link href={route('dashboard')} className="btn-primary">Go to Dashboard →</Link>
+                            ) : (
+                                <>
+                                    <Link href={route('register')} className="btn-primary">Schedule a Consultation →</Link>
+                                    <a href="#how" className="btn-outline">See how it works</a>
+                                </>
+                            )}
+                        </div>
                     </div>
-                    <h1 className="hero-title">
-                        Voice that thinks.<br />
-                        <span className="dim">Agents that act.</span>
-                    </h1>
-                    <p className="hero-desc">
-                        TalkingToEleven lets you deploy intelligent AI voice and text agents in minutes.
-                        Natural conversation, real-time responses, zero infrastructure overhead.
-                    </p>
-                    <div className="hero-actions">
-                        {auth.user ? (
-                            <Link href={route('dashboard')} className="btn-primary">Go to Dashboard →</Link>
-                        ) : (
-                            <>
-                                <Link href={route('register')} className="btn-primary">Start for free →</Link>
-                                <a href="#how" className="btn-outline">See how it works</a>
-                            </>
-                        )}
+
+                    {/* RIGHT — animated orb panel */}
+                    <div className="hero-orb-panel">
+                        {/* status pill */}
+                        <div className="orb-status">
+                            <span className="orb-dot" />
+                            Agent listening
+                        </div>
+
+                        {/* orb + rings */}
+                        <div className="orb-scene">
+                            {/* 4 ripple rings, staggered */}
+                            {[
+                                { dur: '3.2s', delay: '0s'   },
+                                { dur: '3.2s', delay: '0.8s' },
+                                { dur: '3.2s', delay: '1.6s' },
+                                { dur: '3.2s', delay: '2.4s' },
+                            ].map((r, i) => (
+                                <div key={i} className="orb-ring" style={{ '--ring-dur': r.dur, '--ring-delay': r.delay }} />
+                            ))}
+
+                            {/* core orb */}
+                            <div className="orb-core">
+                                {/* mic icon SVG */}
+                                <svg className="orb-mic-icon" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <rect x="12" y="3" width="10" height="16" rx="5" fill="white" opacity="0.9"/>
+                                    <path d="M7 17c0 5.523 4.477 10 10 10s10-4.477 10-10" stroke="white" strokeWidth="2" strokeLinecap="round" opacity="0.7"/>
+                                    <line x1="17" y1="27" x2="17" y2="32" stroke="white" strokeWidth="2" strokeLinecap="round" opacity="0.7"/>
+                                    <line x1="12" y1="32" x2="22" y2="32" stroke="white" strokeWidth="2" strokeLinecap="round" opacity="0.7"/>
+                                </svg>
+                            </div>
+
+                            {/* equaliser bars */}
+                            <div className="orb-eq">
+                                {Array.from({ length: 28 }).map((_, i) => {
+                                    const base = Math.round(4 + Math.random() * 8);
+                                    const max  = Math.round(14 + Math.random() * 26);
+                                    const dur  = (0.6 + Math.random() * 0.8).toFixed(2);
+                                    const del  = (Math.random() * 0.7).toFixed(2);
+                                    return (
+                                        <div key={i} className="orb-eq-bar" style={{
+                                            '--eb-base':  `${base}px`,
+                                            '--eb-max':   `${max}px`,
+                                            '--eb-dur':   `${dur}s`,
+                                            '--eb-delay': `${del}s`,
+                                        }} />
+                                    );
+                                })}
+                            </div>
+                        </div>
+
+                        {/* latency badge */}
+                        <div className="orb-latency">&lt;200ms</div>
                     </div>
+
                 </div>
+
+                {/* stats strip */}
                 <div className="hero-stats">
                     {[
                         { val: '29+',    label: 'Languages supported' },
@@ -706,46 +928,75 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                 <div className="section-head-row">
                     <h2 className="section-title">Simple, transparent pricing.</h2>
                     <p className="section-desc">
-                        Start free, scale when you're ready. No hidden fees, no surprises.
+                       scale when you're ready. No hidden fees, no surprises.
                     </p>
                 </div>
                 <div className="pricing-grid">
-                    {[
-                        {
-                            tier: 'Starter', price: 'Free', period: 'No credit card required',
-                            feats: ['1 Agent', '500 messages / mo', '3 voice options', 'Basic analytics', 'Community support'],
-                            featured: false,
-                        },
-                        {
-                            tier: 'Pro', price: '$29', period: 'per month',
-                            badge: 'Most popular',
-                            feats: ['5 Agents', '10,000 messages / mo', 'All voices + voice clone', 'Advanced analytics', 'Priority support', 'API access', 'Custom persona'],
-                            featured: true,
-                        },
-                        {
-                            tier: 'Scale', price: '$99', period: 'per month',
-                            feats: ['Unlimited Agents', 'Unlimited messages', 'Custom voice models', 'Full analytics suite', 'Dedicated support', 'SLA guarantee', 'White-label option'],
-                            featured: false,
-                        },
-                    ].map((p, i) => (
-                        <div key={i} className={`p-card${p.featured ? ' featured' : ''}`}>
-                            {p.badge && <div className="p-badge">{p.badge}</div>}
-                            <p className="p-tier">{p.tier}</p>
-                            <div className="p-price">{p.price}</div>
-                            <p className="p-period">{p.period}</p>
-                            <ul className="p-feats">
-                                {p.feats.map((f, j) => <li key={j}>{f}</li>)}
-                            </ul>
-                            {auth.user ? (
-                                <Link href={route('dashboard')} className="p-btn">Access dashboard</Link>
-                            ) : (
-                                <Link href={route('register')} className="p-btn">
-                                    {p.featured ? 'Start free trial' : 'Get started'}
-                                </Link>
-                            )}
-                        </div>
-                    ))}
-                </div>
+                        {[
+                            {
+                                tier: 'Starter AI Assistant',
+                                price: '$199',
+                                period: 'per month',
+                                feats: [
+                                    'AI voice assistant setup',
+                                    'Inbound call handling',
+                                    'Basic conversation flow',
+                                    'Call transcripts',
+                                    'Dashboard access',
+                                    'Basic analytics'
+                                ],
+                                featured: false,
+                            },
+                            {
+                                tier: 'Custom AI Assistant',
+                                price: '$299',
+                                period: 'per month',
+                                feats: [
+                                    'Everything in Starter',
+                                    'Custom tools & API integrations',
+                                    'CRM integrations',
+                                    'Custom call logic',
+                                    'Advanced workflows',
+                                    'Outbound call capability'
+                                ],
+                                featured: true,
+                            },
+                            {
+                                tier: 'Enterprise',
+                                price: 'Custom',
+                                period: 'pricing',
+                                feats: [
+                                    'Fully custom AI voice agent',
+                                    'Multi-system integrations',
+                                    'Advanced analytics',
+                                    'High call volume support',
+                                    'Dedicated support',
+                                    'Custom deployment'
+                                ],
+                                featured: false,
+                            },
+                        ].map((p, i) => (
+                            <div key={i} className={`p-card${p.featured ? ' featured' : ''}`}>
+                                {p.badge && <div className="p-badge">{p.badge}</div>}
+                                <p className="p-tier">{p.tier}</p>
+                                <div className="p-price">{p.price}</div>
+                                <p className="p-period">{p.period}</p>
+                                <ul className="p-feats">
+                                    {p.feats.map((f, j) => <li key={j}>{f}</li>)}
+                                </ul>
+
+                                {auth.user ? (
+                                    <Link href={route('dashboard')} className="p-btn">
+                                        Access dashboard
+                                    </Link>
+                                ) : (
+                                    <Link  className="p-btn">
+                                        {p.featured ? 'Get Quote' : i === 2 ? 'Book Consultation' : 'Request Access'}
+                                    </Link>
+                                )}
+                            </div>
+                        ))}
+                    </div>
             </section>
 
             {/* ── FAQ ── */}
@@ -754,12 +1005,10 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                 <h2 className="section-title">Common questions.</h2>
                 <div className="faq-list">
                     {[
-                        { q: 'Do I need an ElevenLabs account?', a: 'No — TalkingToEleven manages the ElevenLabs API layer entirely. Just sign up, configure your agent, and we handle the integration under the hood.' },
                         { q: 'What languages are supported?', a: 'Agents support 29+ languages out of the box via ElevenLabs multilingual models, including English, Spanish, French, German, Japanese, and more.' },
                         { q: 'Can I use a custom voice?', a: 'Yes. Pro and Scale plans support voice cloning. Upload audio samples and we\'ll build a model unique to your brand.' },
                         { q: 'How do I embed an agent on my site?', a: 'Drop in a JavaScript snippet — takes about 30 seconds. We also expose full REST API and webhook endpoints for custom integrations.' },
                         { q: 'Is my conversation data secure?', a: 'All data is encrypted in transit and at rest. We never train on your conversations, and you can request full deletion at any time.' },
-                        { q: 'What happens when I hit my message limit?', a: 'You\'ll receive an in-app warning before the limit. Upgrade anytime, or new conversations will pause until the next billing cycle.' },
                     ].map((item, i) => (
                         <div key={i} className="faq-item" onClick={e => e.currentTarget.classList.toggle('open')}>
                             <button className="faq-q">
@@ -776,15 +1025,14 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
             <section className="cta-section">
                 <h2 className="cta-title">Your first agent is one deploy away.</h2>
                 <p className="cta-sub">
-                    Join developers and teams already shipping smarter conversations with TalkingToEleven.
-                    Free to start, no credit card required.
+                    Access to the platform is currently by invitation after consultation to ensure the solution fits your workflow.
                 </p>
                 <div className="cta-actions">
                     {auth.user ? (
                         <Link href={route('dashboard')} className="btn-primary">Go to Dashboard →</Link>
                     ) : (
                         <>
-                            <Link href={route('register')} className="btn-primary">Create free account →</Link>
+                            <Link href={route('register')} className="btn-primary">Schedule a Consultation →</Link>
                             <Link href={route('login')}    className="btn-outline">Log in</Link>
                         </>
                     )}
@@ -800,10 +1048,17 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                     <a href="#features"  className="footer-link">Features</a>
                     <a href="#pricing"   className="footer-link">Pricing</a>
                     <a href="#faq"       className="footer-link">FAQ</a>
-                    <a href="https://elevenlabs.io" target="_blank" rel="noopener noreferrer" className="footer-link">ElevenLabs ↗</a>
                 </div>
-                <p className="footer-meta">© 2025 TalkingToEleven · Laravel v{laravelVersion} · PHP v{phpVersion}</p>
+                <p className="footer-meta">© 2025 TalkingToEleven</p>
             </footer>
+
+            {
+
+                agentId && (
+
+                    <ElevenLabsWidget/>
+                )
+            }
         </>
     );
 }

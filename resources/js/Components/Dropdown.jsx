@@ -55,6 +55,8 @@ const Content = ({
 
     if (width === '48') {
         widthClasses = 'w-48';
+    } else if (width === 'auto') {
+        widthClasses = 'min-w-48 max-w-xs w-max';
     }
 
     return (
@@ -85,6 +87,7 @@ const Content = ({
         </>
     );
 };
+
 
 const DropdownLink = ({ className = '', children, ...props }) => {
     return (

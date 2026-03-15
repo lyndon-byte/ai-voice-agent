@@ -4,7 +4,7 @@ const ElevenLabsContext = createContext();
 
 export function ElevenLabsProvider({ children }) {
   const [agentId, setAgentId] = useState("");
-  const [config, setConfig] = useState({});
+  const [config, setConfig] = useState(null);
   
   return (
     <ElevenLabsContext.Provider

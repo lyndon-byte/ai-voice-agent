@@ -12,7 +12,6 @@ import WidgetTab from '@/Components/Tabs/WidgetTab';
 import AdvancedTab from '@/Components/Tabs/AdvancedTab';
 
 import { AgentChangesProvider } from '@/Contexts/Agentchangescontext';
-import { ElevenLabsProvider } from '@/Contexts/ElevenLabsProvider';
 import UnsavedChangesBar from '@/Components/Unsavedchangesbar';
 
 export default function Agent({ agent,currentVoice,localKb,currentTab }) {
@@ -51,8 +50,7 @@ export default function Agent({ agent,currentVoice,localKb,currentTab }) {
     return (
 
         <AgentChangesProvider initialAgent={agent}>
-            <ElevenLabsProvider>
-                <AuthenticatedLayout
+            <AuthenticatedLayout
                     header={  
                         <div>
                             <div className="flex items-center gap-2">
@@ -123,7 +121,6 @@ export default function Agent({ agent,currentVoice,localKb,currentTab }) {
                 <NotificationPortal/>
 
             </AuthenticatedLayout>
-         </ElevenLabsProvider>                  
       </AgentChangesProvider>
 
     );

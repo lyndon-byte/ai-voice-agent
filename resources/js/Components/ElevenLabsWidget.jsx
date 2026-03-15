@@ -13,16 +13,15 @@ export default function ElevenLabsWidget() {
       )
     ) {
       const script = document.createElement("script");
-      script.src =
-        "https://unpkg.com/@elevenlabs/convai-widget-embed";
+      script.src = "https://unpkg.com/@elevenlabs/convai-widget-embed";
       script.async = true;
       document.body.appendChild(script);
     }
   }, []);
 
-  // Apply config
+  // Apply config only when provided
   useEffect(() => {
-    if (ref.current) {
+    if (config && ref.current) {
       ref.current.setAttribute(
         "override-config",
         JSON.stringify(config)
@@ -33,8 +32,8 @@ export default function ElevenLabsWidget() {
   return (
     <elevenlabs-convai
       override-language="en"
-      ref={ref}
       agent-id={agentId}
+      {...(config ? { ref } : {})}
     />
   );
 }

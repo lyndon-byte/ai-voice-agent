@@ -276,7 +276,7 @@ export default function AuthenticatedLayout({ header, tabs, activeTab, onTabChan
                                     </div>
                                 </button>
                             </Dropdown.Trigger>
-                            <Dropdown.Content align="right">
+                            <Dropdown.Content align="right" width='auto'>
                                 <div className="px-4 py-2 text-sm text-gray-900">
                                     <div className="font-medium">{user.name}</div>
                                     <div className="text-gray-500">{user.email}</div>
