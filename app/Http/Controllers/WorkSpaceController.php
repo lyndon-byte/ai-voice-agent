@@ -2,12 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\PostCallNotificationMail;
 use App\Models\Agents;
 use App\Models\Secrets;
 use GuzzleHttp\Client;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
 
 class WorkSpaceController extends Controller
@@ -128,6 +131,7 @@ class WorkSpaceController extends Controller
         ]);
 
         $webhook = $org->webhook;
+        $receivers = $org->postCallNotificationReceivers()->pluck('email');
 
         if ($webhook) {
         
@@ -141,6 +145,35 @@ class WorkSpaceController extends Controller
             ])
             ->withBody($rawPayload, 'application/json')
             ->post($webhook->webhook_url);
+        }
+
+        // check post call notification receiver
+        if ($receivers->isEmpty()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'No receivers configured'
+            ]);
+        }
+
+        $link = URL::temporarySignedRoute(
+            'conversation.public',
+            now()->addDays(7),
+            [
+                'conversation_id' => $data['conversation_id'],
+                'agent_name' => $data['agent_name']
+            ]
+        );
+
+        foreach ($receivers as $email) {
+
+            Mail::to($email)->send(
+                new PostCallNotificationMail(
+                    $data['agent_name'],
+                    $data['conversation_id'],
+                    $link
+                )
+            );
+    
         }
     
         return response()->json(['status' => 'saved']);        

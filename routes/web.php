@@ -3,6 +3,7 @@
 use App\Http\Controllers\AgentChangesController;
 use App\Http\Controllers\AgentController;
 use App\Http\Controllers\AnalysisController;
+use App\Http\Controllers\ConversationController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\JobTrackerController;
 use App\Http\Controllers\KnowledgeBaseController; 
@@ -13,8 +14,11 @@ use App\Http\Controllers\SuperAdminImpersonationController;
 use App\Http\Controllers\ToolsController;
 use App\Http\Controllers\VoiceController;
 use App\Http\Controllers\WorkSpaceController;
+use App\Mail\PostCallNotificationMail;
 use Illuminate\Foundation\Application;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\URL;
 use Inertia\Inertia;
 
 Route::get('/', function () {
@@ -83,7 +87,6 @@ Route::middleware(['auth','verified','org','role:owner'])->group(function () {
 
     Route::get('/app/get-conversations',[AnalysisController::class, 'getConversations']);
     Route::get('/app/get-conversation-details',[AnalysisController::class, 'getConversationDetails']);
-    Route::get('/app/get-conversation-audio',[AnalysisController::class, 'getConversationAudio']);
 
     Route::get('/app/get-webhook',[WorkSpaceController::class, 'webhook']);
     Route::post('/app/create-webhook',[WorkSpaceController::class, 'createWebhook']);
@@ -109,10 +112,14 @@ Route::middleware(['auth','verified','org','role:owner'])->group(function () {
 
     })->name('outbound');
 
-
 });
 
 Route::post('/receive-webhook',[WorkSpaceController::class, 'receiveWebhook']);
+Route::get('/app/get-conversation-audio',[AnalysisController::class, 'getConversationAudio']);
+
+Route::get('/conversation/{conversation_id}',[ConversationController::class,'publicView'])
+        ->name('conversation.public')
+        ->middleware('signed');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

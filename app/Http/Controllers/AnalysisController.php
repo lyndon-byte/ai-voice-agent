@@ -66,13 +66,13 @@ class AnalysisController extends Controller
         $response = $client->request('GET', "https://api.elevenlabs.io/v1/convai/conversations/{$validated['conversation_id']}/audio", [
 
              'headers' => [
-                 'xi-api-key' => env('ELEVEN_LABS_KEY'),
+                 'xi-api-key' => config('services.elevenlabs.api_key'),
                  'Content-Type' => 'application/json',
              ],
 
          ]);
 
-         return $response->getBody(); // returns the file (blob) itself and not a playable link
+         return $response->getBody(); 
 
     }
 
