@@ -126,7 +126,7 @@ function Waveform({ isPlaying = false  }) {
 }
 
 // ─── Audio Player ───────────────────────────────────────────────────────────
-function AudioPlayer({ conversationId }) {
+function AudioPlayer({ conversationId, audioLink }) {
 
     const audioRef = useRef(null);
     const [playing,  setPlaying]  = useState(false);
@@ -144,8 +144,7 @@ function AudioPlayer({ conversationId }) {
         if (audioUrl) { audioRef.current?.play(); setPlaying(true); return; }
         setLoading(true); setError(null);
         try {
-            const { data } = await axios.get('/app/get-conversation-audio', {
-                params: { conversation_id: conversationId },
+            const { data } = await axios.get(audioLink, {
                 responseType: 'blob',
             });
             setAudioUrl(URL.createObjectURL(data));
@@ -236,9 +235,51 @@ function DataCollectionResultItem({ item, index }) {
     );
 }
 
+function EvaluationCriteriaResultItem({ criteriaKey, item, index }) {
+    
+    if (!item) return null;
+
+    const resultMap = {
+        success: { cls: 'bg-emerald-100 text-emerald-700', Icon: CheckCircle2 },
+        failure: { cls: 'bg-red-100 text-red-600',     Icon: XCircle },
+        unknown: { cls: 'bg-gray-100 text-gray-500',   Icon: AlertCircle },
+    };
+    const cfg = resultMap[item.result] ?? resultMap.unknown;
+    const { Icon } = cfg;
+
+    return (
+        <div className={`${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
+            <div className="flex items-center justify-between gap-4 px-3 py-2.5">
+                <span className="text-sm font-medium text-gray-600 shrink-0">
+                    {item.criteria_id ?? criteriaKey}
+                </span>
+                <div className="flex items-center gap-2">
+                    <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold ${cfg.cls}`}>
+                        <Icon className="h-3 w-3" />
+                        {item.result ?? 'unknown'}
+                    </span>
+                   
+                </div>
+            </div>
+            {item.rationale && (
+                <div className="border-t border-gray-100 bg-blue-50/50 px-3 py-2">
+                    <p className="text-xs leading-relaxed text-gray-500">{item.rationale}</p>
+                </div>
+            )}
+        </div>
+    );
+}
+
 function OverviewTab({ detail }) {
     const analysis = detail?.analysis ?? {};
     const meta     = detail?.metadata ?? {};
+
+    const evaluationResults = analysis.evaluation_criteria_results;
+    const hasEvaluationResults =
+        evaluationResults != null &&
+        typeof evaluationResults === 'object' &&
+        Object.keys(evaluationResults).length > 0;
+
     const rows = [
         { label: 'Call status',        value: <CallSuccessBadge value={analysis.call_successful} />},
         { label: 'How the call ended', value: meta.termination_reason ?? '—' },
@@ -263,12 +304,30 @@ function OverviewTab({ detail }) {
                     </div>
                 ))}
             </div>
+
             {analysis.data_collection_results_list?.length > 0 && (
                 <div className="mt-5">
                     <p className="mb-2 text-sm font-semibold text-gray-900">Data collection</p>
                     <div className="overflow-hidden rounded-lg border border-gray-200 divide-y divide-gray-100">
                         {analysis.data_collection_results_list.map((item, i) => (
                             <DataCollectionResultItem key={item.data_collection_id ?? i} item={item} index={i} />
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {hasEvaluationResults && (
+
+                <div className="mt-5">
+                    <p className="mb-2 text-sm font-semibold text-gray-900">Evaluation criteria</p>
+                    <div className="overflow-hidden rounded-lg border border-gray-200 divide-y divide-gray-100">
+                        {Object.entries(evaluationResults).map(([key, item], i) => (
+                            <EvaluationCriteriaResultItem
+                                key={key}
+                                criteriaKey={key}
+                                item={item}
+                                index={i}
+                            />
                         ))}
                     </div>
                 </div>
@@ -381,6 +440,7 @@ function ConversationDrawer({ conversation, onClose }) {
     const [detailLoading, setDetailLoading] = useState(true);
     const [detailError,   setDetailError]   = useState(null);
     const [activeTab,     setActiveTab]     = useState('overview');
+    const [audioLink,     setAudioLink]          = useState('');
 
     const tabs = [
         { key: 'overview',      label: 'Overview' },
@@ -393,7 +453,10 @@ function ConversationDrawer({ conversation, onClose }) {
         if (!conversationId) return;
         setDetail(null); setDetailLoading(true); setDetailError(null); setActiveTab('overview');
         axios.get('/app/get-conversation-details', { params: { conversation_id: conversationId } })
-            .then(({ data }) => setDetail(data?.data ?? data))
+            .then(({ data }) => { 
+                setDetail(data?.data ?? data)
+                setAudioLink(data.audioLink)
+            })
             .catch(err => setDetailError(err?.response?.data?.message ?? 'Failed to load details.'))
             .finally(() => setDetailLoading(false));
     }, [conversationId]);
@@ -432,7 +495,7 @@ function ConversationDrawer({ conversation, onClose }) {
                     <div className="flex min-h-0 flex-1 overflow-hidden">
                         <div className="flex flex-1 flex-col overflow-hidden">
                             <div className="flex-1 overflow-y-auto px-6 pt-5 pb-8">
-                                <AudioPlayer conversationId={conversationId} />
+                                <AudioPlayer conversationId={conversationId} audioLink={audioLink} />
                                 
                                 <div className="mb-5 border-b border-gray-200">
                                     <div className="flex gap-0.5">

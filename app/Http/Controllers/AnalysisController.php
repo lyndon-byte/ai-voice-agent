@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use GuzzleHttp\Client;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\URL;
 
 class AnalysisController extends Controller
 {
@@ -51,12 +52,31 @@ class AnalysisController extends Controller
 
         $body = $response->getBody()->getContents();
         $data = json_decode($body, true);
+
+        $link = URL::temporarySignedRoute(
+            'conversation.audio',
+            now()->addHours(24),
+            [
+                'conversation_id' => $validated['conversation_id']
+            ]
+        );
   
-        return response()->json($data);
+        return response()->json(
+            
+            [
+                'data' => $data,
+                'audioLink' => $link
+                
+            ]
+        );
     }
 
     public function getConversationAudio(Request $request){
 
+        if (!$request->hasValidSignature()) {
+            abort(403);
+        }
+    
         $validated = $request->validate([
             'conversation_id' => 'required'
         ]);

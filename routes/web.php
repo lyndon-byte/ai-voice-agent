@@ -14,11 +14,8 @@ use App\Http\Controllers\SuperAdminImpersonationController;
 use App\Http\Controllers\ToolsController;
 use App\Http\Controllers\VoiceController;
 use App\Http\Controllers\WorkSpaceController;
-use App\Mail\PostCallNotificationMail;
 use Illuminate\Foundation\Application;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\URL;
 use Inertia\Inertia;
 
 Route::get('/', function () {
@@ -115,7 +112,10 @@ Route::middleware(['auth','verified','org','role:owner'])->group(function () {
 });
 
 Route::post('/receive-webhook',[WorkSpaceController::class, 'receiveWebhook']);
-Route::get('/app/get-conversation-audio',[AnalysisController::class, 'getConversationAudio']);
+
+Route::get('/app/get-conversation-audio',[AnalysisController::class, 'getConversationAudio'])
+    ->name('conversation.audio')
+    ->middleware('signed');
 
 Route::get('/conversation/{conversation_id}',[ConversationController::class,'publicView'])
         ->name('conversation.public')

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use GuzzleHttp\Client;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\URL;
 use Inertia\Inertia;
 
 class ConversationController extends Controller
@@ -25,7 +26,15 @@ class ConversationController extends Controller
                  'Content-Type' => 'application/json',
              ],
 
-         ]);
+        ]);
+
+        $link = URL::temporarySignedRoute(
+            'conversation.audio',
+            now()->addHours(24),
+            [
+                'conversation_id' => $conversation_id
+            ]
+        );
 
         $body = $response->getBody()->getContents();
         $data = json_decode($body, true);
@@ -33,7 +42,8 @@ class ConversationController extends Controller
         return Inertia::render('ConversationPublicView',[
 
             'detail' => $data,
-            'agentName' => $agentName
+            'agentName' => $agentName,
+            'audioLink' => $link
 
         ]);
 

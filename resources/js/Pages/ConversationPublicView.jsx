@@ -3,7 +3,34 @@ import {
    Loader2, Play, Pause,Info, RefreshCw, CheckCircle2, XCircle, AlertCircle
 } from 'lucide-react';
 import axios from 'axios';
+import { Head } from "@inertiajs/react";
 
+function GuestLayout({ children, title, conversationId }) {
+    return (
+        <div className="min-h-screen bg-gray-50">
+            <GuestNavbar title={title} conversationId={conversationId} />
+            <main>{children}</main>
+        </div>
+    );
+}
+
+function GuestNavbar({ title, conversationId }) {
+    return (
+        <nav className="sticky top-0 z-10 flex h-[52px] items-center gap-3 border-b border-gray-100 bg-white px-6">
+
+            {/* Page title */}
+            <div className="flex items-baseline gap-2 min-w-0">
+                <span className="font-bold text-gray-900 whitespace-nowrap">
+                    Conversation with <strong className="font-medium">{title}</strong>
+                </span>
+                <span className="font-mono  text-gray-400 whitespace-nowrap truncate">
+                   ({conversationId})
+                </span>
+            </div>
+            
+        </nav>
+    );
+}
 
 function formatDuration(secs) {
     if (secs == null) return '—';
@@ -101,7 +128,7 @@ function Waveform({ isPlaying = false  }) {
 }
 
 // ─── Audio Player ───────────────────────────────────────────────────────────
-function AudioPlayer({ conversationId }) {
+function AudioPlayer({ conversationId, audioLink }) {
 
     const audioRef = useRef(null);
     const [playing,  setPlaying]  = useState(false);
@@ -119,8 +146,7 @@ function AudioPlayer({ conversationId }) {
         if (audioUrl) { audioRef.current?.play(); setPlaying(true); return; }
         setLoading(true); setError(null);
         try {
-            const { data } = await axios.get('/app/get-conversation-audio', {
-                params: { conversation_id: conversationId },
+            const { data } = await axios.get(audioLink, {
                 responseType: 'blob',
             });
             setAudioUrl(URL.createObjectURL(data));
@@ -211,9 +237,52 @@ function DataCollectionResultItem({ item, index }) {
     );
 }
 
+function EvaluationCriteriaResultItem({ criteriaKey, item, index }) {
+    
+    if (!item) return null;
+
+    const resultMap = {
+        success: { cls: 'bg-emerald-100 text-emerald-700', Icon: CheckCircle2 },
+        failure: { cls: 'bg-red-100 text-red-600',     Icon: XCircle },
+        unknown: { cls: 'bg-gray-100 text-gray-500',   Icon: AlertCircle },
+    };
+    const cfg = resultMap[item.result] ?? resultMap.unknown;
+    const { Icon } = cfg;
+
+    return (
+        <div className={`${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
+            <div className="flex items-center justify-between gap-4 px-3 py-2.5">
+                <span className="text-sm font-medium text-gray-600 shrink-0">
+                    {item.criteria_id ?? criteriaKey}
+                </span>
+                <div className="flex items-center gap-2">
+                    <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold ${cfg.cls}`}>
+                        <Icon className="h-3 w-3" />
+                        {item.result ?? 'unknown'}
+                    </span>
+                   
+                </div>
+            </div>
+            {item.rationale && (
+                <div className="border-t border-gray-100 bg-blue-50/50 px-3 py-2">
+                    <p className="text-xs leading-relaxed text-gray-500">{item.rationale}</p>
+                </div>
+            )}
+        </div>
+    );
+}
+
 function OverviewTab({ detail }) {
+
     const analysis = detail?.analysis ?? {};
     const meta     = detail?.metadata ?? {};
+
+    const evaluationResults = analysis.evaluation_criteria_results;
+    const hasEvaluationResults =
+        evaluationResults != null &&
+        typeof evaluationResults === 'object' &&
+        Object.keys(evaluationResults).length > 0;
+
     const rows = [
         { label: 'Call status',        value: <CallSuccessBadge value={analysis.call_successful} />},
         { label: 'How the call ended', value: meta.termination_reason ?? '—' },
@@ -248,6 +317,24 @@ function OverviewTab({ detail }) {
                     </div>
                 </div>
             )}
+
+            {hasEvaluationResults && (
+
+                <div className="mt-5">
+                    <p className="mb-2 text-sm font-semibold text-gray-900">Evaluation criteria</p>
+                    <div className="overflow-hidden rounded-lg border border-gray-200 divide-y divide-gray-100">
+                        {Object.entries(evaluationResults).map(([key, item], i) => (
+                            <EvaluationCriteriaResultItem
+                                key={key}
+                                criteriaKey={key}
+                                item={item}
+                                index={i}
+                            />
+                        ))}
+                    </div>
+                </div>
+            )}
+
         </div>
     );
 }
@@ -351,7 +438,7 @@ function MetadataPanel({ detail }) {
 }
 
 // ─── Conversation Drawer ────────────────────────────────────────────────────
-export default function ConversationPublicView({ detail, agentName }) {
+export default function ConversationPublicView({ detail, agentName, audioLink }) {
 
     const [activeTab,     setActiveTab]     = useState('overview');
 
@@ -364,43 +451,41 @@ export default function ConversationPublicView({ detail, agentName }) {
     const conversationId = detail?.conversation_id ?? detail?.id;
   
     return (
-      <div className="mx-auto max-w-7xl px-6 py-6">
-        {/* Header */}
-        <div className="mb-6 flex items-center gap-3">
-          <div>
-            <h1 className="text-base font-semibold text-gray-900">
-              Conversation with <span className="font-bold">{agentName}</span>
-            </h1>
-            <p className="font-mono text-xs text-gray-400">{conversationId}</p>
-          </div>
-        </div>
-  
-        {/* Two-column layout */}
-        <div className="flex min-h-0 gap-4">
-          <div className="flex flex-1 flex-col overflow-hidden">
-                <div className="flex min-h-0 flex-1 overflow-hidden">
-                        <div className="flex flex-1 flex-col overflow-hidden">
-                            <div className="flex-1 overflow-y-auto px-6 pt-5 pb-8">
-                                <AudioPlayer conversationId={conversationId} />
-                                    <div className="mb-5 border-b border-gray-200">
-                                        <div className="flex gap-0.5">
-                                            {tabs.map(({ key, label }) => (
-                                                <button key={key} onClick={() => setActiveTab(key)} className={`relative px-3 pb-3 pt-1 text-sm font-medium transition-colors ${activeTab === key ? 'text-gray-900' : 'text-gray-400 hover:text-gray-700'}`}>
-                                                    {label}
-                                                    {activeTab === key && <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-t-full bg-gray-900" />}
-                                                </button>
-                                            ))}
+
+    <GuestLayout
+        title={agentName}
+        conversationId={conversationId}
+    >
+        <Head title="View Conversation" />
+        
+        <div className="mx-auto max-w-7xl px-6 py-6 bg-white mt-10 rounded">
+            {/* Two-column layout */}
+            <div className="flex min-h-0 gap-4">
+            <div className="flex flex-1 flex-col overflow-hidden">
+                    <div className="flex min-h-0 flex-1 overflow-hidden">
+                            <div className="flex flex-1 flex-col overflow-hidden">
+                                <div className="flex-1 overflow-y-auto px-6 pt-5 pb-8">
+                                    <AudioPlayer conversationId={conversationId} audioLink={audioLink} />
+                                        <div className="mb-5 border-b border-gray-200">
+                                            <div className="flex gap-0.5">
+                                                {tabs.map(({ key, label }) => (
+                                                    <button key={key} onClick={() => setActiveTab(key)} className={`relative px-3 pb-3 pt-1 text-sm font-medium transition-colors ${activeTab === key ? 'text-gray-900' : 'text-gray-400 hover:text-gray-700'}`}>
+                                                        {label}
+                                                        {activeTab === key && <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-t-full bg-gray-900" />}
+                                                    </button>
+                                                ))}
+                                            </div>
                                         </div>
+                                        {activeTab === 'overview'      && <OverviewTab      detail={detail} />}
+                                        {activeTab === 'transcription' && <TranscriptionTab transcript={detail?.transcript} />}
+                                        {activeTab === 'client data'   && <ClientDataTab    detail={detail} />}
                                     </div>
-                                    {activeTab === 'overview'      && <OverviewTab      detail={detail} />}
-                                    {activeTab === 'transcription' && <TranscriptionTab transcript={detail?.transcript} />}
-                                    {activeTab === 'client data'   && <ClientDataTab    detail={detail} />}
-                                </div>
-                        </div>
-                </div>
-          </div>
-          <MetadataPanel detail={detail} />
+                            </div>
+                    </div>
+            </div>
+            <MetadataPanel detail={detail} />
+            </div>
         </div>
-      </div>
+      </GuestLayout>
     );
   }
