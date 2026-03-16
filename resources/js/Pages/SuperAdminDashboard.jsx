@@ -742,10 +742,134 @@ function LogoutModal({ onClose }) {
   );
 }
 
+function InviteModal({ onClose }) {
+
+  const [email, setEmail] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [done, setDone] = useState(false);
+ 
+  const isValidEmail = (val) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val.trim());
+ 
+  const handleSend = async () => {
+
+    const val = email.trim().toLowerCase();
+
+    if (!val) { setError("Please enter an email address."); return; }
+    if (!isValidEmail(val)) { setError("That doesn't look like a valid email."); return; }
+    setLoading(true);
+
+    await axios.post('/admin/send-invite',{email: val})
+
+    setLoading(false);
+    setDone(true)
+    
+  };
+ 
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative bg-[#0f1117] border border-white/10 rounded-2xl p-8 max-w-md w-full shadow-2xl shadow-black/60">
+        <div className="absolute top-0 left-8 right-8 h-px bg-gradient-to-r from-transparent via-cyan-500 to-transparent" />
+ 
+        {done ? (
+          <div className="text-center py-4">
+            <div className="w-16 h-16 bg-cyan-500/10 border border-cyan-500/30 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <p className="text-white font-semibold text-lg">Invitation Sent!</p>
+            <p className="text-zinc-400 text-sm mt-1 mb-1">Owner invite dispatched to</p>
+            <p className="text-cyan-400 text-sm font-medium mb-6">{email.trim().toLowerCase()}</p>
+            <button
+              onClick={onClose}
+              className="w-full py-2.5 rounded bg-white/5 border border-white/10 text-zinc-300 hover:bg-white/10 transition-colors text-sm"
+            >
+              Done
+            </button>
+          </div>
+        ) : (
+          <>
+            {/* Header */}
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div>
+                  <h3 className="text-white font-semibold">Invite Organization Owner</h3>
+                  <p className="text-zinc-500 text-xs">Invite someone to create & own a new org</p>
+                </div>
+              </div>
+              <button onClick={onClose} className="text-zinc-600 hover:text-zinc-400 transition-colors">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+ 
+            <p className="text-zinc-400 text-sm mb-5 leading-relaxed">
+              The invited person will receive a setup link to create their own organization and become its owner.
+            </p>
+ 
+            {/* Single email input */}
+            <div className="mb-6">
+              <label className="text-zinc-400 text-xs font-medium mb-2 block">Email address</label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => { setEmail(e.target.value); setError(""); }}
+                onKeyDown={(e) => { if (e.key === "Enter") handleSend(); }}
+                placeholder="owner@example.com"
+                autoFocus
+                className="w-full bg-white/[0.04] text-white text-sm placeholder-zinc-600 rounded px-4 py-3 outline-none focus:bg-white/[0.06] transition-colors"
+              />
+              {error && <p className="text-rose-400 text-xs mt-2">{error}</p>}
+            </div>
+ 
+            {/* Actions */}
+            <div className="flex gap-3">
+              <button
+                onClick={onClose}
+                className="flex-1 py-2.5 rounded bg-white/5 border border-white/10 text-zinc-300 hover:bg-white/10 transition-colors text-sm"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSend}
+                disabled={loading || !email.trim()}
+                className="flex-1 py-2.5 rounded bg-cyan-600 hover:bg-cyan-500 text-white text-sm font-medium transition-all disabled:opacity-40 flex items-center justify-center gap-2"
+              >
+                {loading ? (
+                  <>
+                    <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                    Sending…
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                    </svg>
+                    Send Invite
+                  </>
+                )}
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+ 
+
 // ── Page ─────────────────────────────────────────────────────────────────────
 export default function SuperAdminDashboard({ organizations }) {
 
   const [logoutModal, setLogoutModal] = useState(false);
+  const [inviteModal, setInviteModal] = useState(false);
+
   const totalUsers = organizations.reduce((sum, o) => sum + o.users.length, 0);
 
   return (
@@ -796,12 +920,24 @@ export default function SuperAdminDashboard({ organizations }) {
         {/* Main content */}
         <main className="max-w-5xl mx-auto px-4 sm:px-6 py-10">
           {/* Page header */}
-          <div className="mb-8">
+          <div className="flex items-start justify-between gap-4 mb-8">
+          <div>
             <h1 className="text-2xl font-bold tracking-tight text-white">Organizations</h1>
             <p className="text-zinc-500 text-sm mt-1">
               Manage tenant organizations and impersonate users for support.
             </p>
           </div>
+          <button
+            onClick={() => setInviteModal(true)}
+            className="flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded bg-cyan-600 hover:bg-cyan-500 text-white text-sm font-medium transition-all shadow-lg shadow-cyan-950/40"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+            </svg>
+            <span className="hidden sm:inline">Invite Owner</span>
+            <span className="sm:hidden">Invite</span>
+          </button>
+        </div>
 
           {/* Stats row */}
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-8">
@@ -875,6 +1011,8 @@ export default function SuperAdminDashboard({ organizations }) {
         </main>
 
         {logoutModal && <LogoutModal onClose={() => setLogoutModal(false)} />}
+        {inviteModal && <InviteModal onClose={() => setInviteModal(false)} />}
+
       </div>
     </>
   );

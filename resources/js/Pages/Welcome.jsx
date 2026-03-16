@@ -701,7 +701,7 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                     ) : (
                         <>
                             <Link href={route('login')}    className="nav-link">Log in</Link>
-                            <Link href={route('register')} className="nav-btn">Get a Quote</Link>
+                            <Link  className="nav-btn">Get a Quote</Link>
                         </>
                     )}
                 </div>
@@ -734,7 +734,7 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                                 <Link href={route('dashboard')} className="btn-primary">Go to Dashboard →</Link>
                             ) : (
                                 <>
-                                    <Link href={route('register')} className="btn-primary">Schedule a Consultation →</Link>
+                                    <Link  className="btn-primary">Schedule a Consultation →</Link>
                                     <a href="#how" className="btn-outline">See how it works</a>
                                 </>
                             )}
@@ -1032,7 +1032,7 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                         <Link href={route('dashboard')} className="btn-primary">Go to Dashboard →</Link>
                     ) : (
                         <>
-                            <Link href={route('register')} className="btn-primary">Schedule a Consultation →</Link>
+                            <Link  className="btn-primary">Schedule a Consultation →</Link>
                             <Link href={route('login')}    className="btn-outline">Log in</Link>
                         </>
                     )}

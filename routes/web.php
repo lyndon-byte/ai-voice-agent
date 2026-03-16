@@ -34,6 +34,8 @@ Route::middleware(['auth','org','role:system'])->group(function () {
     Route::post('/admin/switch-agents',[SuperAdminDashboardController::class,'agentsSwitch']);
     Route::get('/admin/dashboard',[SuperAdminDashboardController::class,'index'])->name('system.admin.dashboard');
     Route::post('/admin/impersonate/{user}',[SuperAdminImpersonationController::class,'createToken']);
+    Route::post('/admin/send-invite',[SuperAdminDashboardController::class,'sendInvite']);
+
     Route::get('/impersonate/{token}',[SuperAdminImpersonationController::class,'login']);
     
 });
@@ -43,7 +45,6 @@ Route::middleware(['auth','impersonation'])->group(function () {
     Route::post('/impersonate/leave',[SuperAdminImpersonationController::class,'leave']);
 
 });
-
 
 
 Route::middleware(['auth','verified','org','role:owner'])->group(function () {
@@ -111,12 +112,11 @@ Route::middleware(['auth','verified','org','role:owner'])->group(function () {
 
 });
 
-Route::post('/receive-webhook',[WorkSpaceController::class, 'receiveWebhook']);
 
+Route::post('/receive-webhook',[WorkSpaceController::class, 'receiveWebhook']);
 Route::get('/app/get-conversation-audio',[AnalysisController::class, 'getConversationAudio'])
     ->name('conversation.audio')
     ->middleware('signed');
-
 Route::get('/conversation/{conversation_id}',[ConversationController::class,'publicView'])
         ->name('conversation.public')
         ->middleware('signed');
