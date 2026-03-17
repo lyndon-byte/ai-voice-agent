@@ -4,8 +4,6 @@ import './bootstrap';
 import { createInertiaApp } from '@inertiajs/react';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createRoot } from 'react-dom/client';
-import { AgentChangesProvider } from '@/Contexts/Agentchangescontext';
-import UnsavedChangesBar from '@/Components/Unsavedchangesbar';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 import { ElevenLabsProvider } from './Contexts/ElevenLabsProvider';
