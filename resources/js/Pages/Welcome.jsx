@@ -8,8 +8,11 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
      
     const { agentId, setAgentId } = useElevenLabs()
 
+    const bookingUrl = import.meta.env.VITE_LANDING_PAGE_BOOKING_URL
+
     useEffect(() => {
         setAgentId(import.meta.env.VITE_LANDING_PAGE_AGENT_ID)
+        console.log(bookingUrl)
     },[])
 
     return (
@@ -701,7 +704,7 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                     ) : (
                         <>
                             <Link href={route('login')}    className="nav-link">Log in</Link>
-                            <Link  className="nav-btn">Get a Quote</Link>
+                            <a href={bookingUrl} className="nav-btn">Get a Quote</a>
                         </>
                     )}
                 </div>
@@ -734,7 +737,7 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                                 <Link href={route('dashboard')} className="btn-primary">Go to Dashboard →</Link>
                             ) : (
                                 <>
-                                    <Link  className="btn-primary">Schedule a Consultation →</Link>
+                                    <a href={bookingUrl}  className="btn-primary">Schedule a Consultation →</a>
                                     <a href="#how" className="btn-outline">See how it works</a>
                                 </>
                             )}
@@ -990,9 +993,9 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                                         Access dashboard
                                     </Link>
                                 ) : (
-                                    <Link  className="p-btn">
-                                        {p.featured ? 'Get Quote' : i === 2 ? 'Book Consultation' : 'Request Access'}
-                                    </Link>
+                                    <a href={bookingUrl}  className="p-btn">
+                                        Book Consultation
+                                    </a>
                                 )}
                             </div>
                         ))}
@@ -1032,7 +1035,7 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                         <Link href={route('dashboard')} className="btn-primary">Go to Dashboard →</Link>
                     ) : (
                         <>
-                            <Link  className="btn-primary">Schedule a Consultation →</Link>
+                            <a href={bookingUrl} className="btn-primary">Schedule a Consultation →</a>
                             <Link href={route('login')}    className="btn-outline">Log in</Link>
                         </>
                     )}
