@@ -1,9 +1,9 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { MessageSquare } from 'lucide-react';
-import ModernField from '../shared/ModernField';
-import TimezoneModal from '../modals/TimezoneModal';
-import LanguageModal from '../modals/LanguageModal';
-import VoiceDrawer from '../modals/VoiceDrawer';
+import ModernField from '../Shared/ModernField';
+import TimezoneModal from '../Modals/TimezoneModal';
+import LanguageModal from '../Modals/LanguageModal';
+import VoiceDrawer from '../Modals/VoiceDrawer';
 import { useAgentChanges } from '@/Contexts/AgentChangesContext';
 
 // ─── System variables list ────────────────────────────────────────────────────

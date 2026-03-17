@@ -1,4 +1,4 @@
-import KnowledgeBaseSection from '../sections/KnowledgeBaseSection';
+import KnowledgeBaseSection from '../Sections/KnowledgeBaseSection';
 
 
 export default function KnowledgeTab({ config,agent,localKb }) {
