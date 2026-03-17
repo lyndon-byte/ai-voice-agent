@@ -1,4 +1,4 @@
-import Portal from '../shared/Portal';
+import Portal from '../Shared/Portal';
 
 export default function ViewChangesModal({ isOpen, onClose, changes }) {
     if (!isOpen) return null;
