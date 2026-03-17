@@ -11,7 +11,7 @@ import EvaluationTab from '@/Components/Tabs/EvaluationTab';
 import WidgetTab from '@/Components/Tabs/WidgetTab';
 import AdvancedTab from '@/Components/Tabs/AdvancedTab';
 
-import { AgentChangesProvider } from '@/Contexts/Agentchangescontext';
+import { AgentChangesProvider } from '@/Contexts/AgentChangesContext';
 import UnsavedChangesBar from '@/Components/Unsavedchangesbar';
 
 export default function Agent({ agent,currentVoice,localKb,currentTab }) {
