@@ -220,7 +220,7 @@ function Input({ value, onChange, placeholder, type = 'text' }) {
             value={value ?? ''}
             onChange={e => onChange(type === 'number' ? Number(e.target.value) : e.target.value)}
             placeholder={placeholder}
-            className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-400 focus:bg-white focus:outline-none focus:ring-1 focus:ring-gray-300"
+            className="w-full rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-400 focus:bg-white focus:outline-none focus:ring-1 focus:ring-gray-300"
         />
     );
 }
@@ -230,7 +230,7 @@ function Select({ value, onChange, options }) {
         <select
             value={value}
             onChange={e => onChange(e.target.value)}
-            className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 focus:border-gray-400 focus:bg-white focus:outline-none focus:ring-1 focus:ring-gray-300"
+            className="w-full rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 focus:border-gray-400 focus:bg-white focus:outline-none focus:ring-1 focus:ring-gray-300"
         >
             {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
         </select>
@@ -249,7 +249,7 @@ function CommonFields({ config, onChange }) {
                     onChange={e => set('description', e.target.value)}
                     rows={3}
                     placeholder="e.g. End the call when the user says goodbye."
-                    className="w-full resize-none rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-400 focus:bg-white focus:outline-none focus:ring-1 focus:ring-gray-300"
+                    className="w-full resize-none rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-400 focus:bg-white focus:outline-none focus:ring-1 focus:ring-gray-300"
                 />
             </Field>
             <Field label="Response timeout (seconds)">
@@ -277,7 +277,7 @@ function CommonFields({ config, onChange }) {
                     ]}
                 />
             </Field>
-            <div className="space-y-3 rounded-lg border border-gray-200 bg-gray-50 p-3">
+            <div className="space-y-3 rounded-md border border-gray-200 bg-gray-50 p-3">
                 <Toggle checked={config.disable_interruptions} onChange={v => set('disable_interruptions', v)} label="Disable interruptions" />
                 <Toggle checked={config.force_pre_tool_speech} onChange={v => set('force_pre_tool_speech', v)} label="Force pre-tool speech" />
             </div>
@@ -307,7 +307,7 @@ function VoicemailForm({ params, onChange }) {
                 onChange={e => onChange({ ...params, voicemail_message: e.target.value })}
                 rows={3}
                 placeholder="e.g. Hi, please call us back at..."
-                className="w-full resize-none rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-400 focus:bg-white focus:outline-none focus:ring-1 focus:ring-gray-300"
+                className="w-full resize-none rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-400 focus:bg-white focus:outline-none focus:ring-1 focus:ring-gray-300"
             />
         </Field>
     );
@@ -331,7 +331,7 @@ function AgentSelect({ value, onChange, currentAgentId }) {
 
     if (loading) {
         return (
-            <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">
+            <div className="flex items-center gap-2 rounded-md border border-gray-200 bg-gray-50 px-3 py-2">
                 <svg className="h-3.5 w-3.5 animate-spin text-gray-400" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
@@ -342,14 +342,14 @@ function AgentSelect({ value, onChange, currentAgentId }) {
     }
 
     if (error) {
-        return <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-500">{error}</p>;
+        return <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-500">{error}</p>;
     }
 
     return (
         <select
             value={value ?? ''}
             onChange={e => onChange(e.target.value)}
-            className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 focus:border-gray-400 focus:bg-white focus:outline-none focus:ring-1 focus:ring-gray-300"
+            className="w-full rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 focus:border-gray-400 focus:bg-white focus:outline-none focus:ring-1 focus:ring-gray-300"
         >
             <option value="" disabled>Select an agent…</option>
             {agents.map(a => (
@@ -401,7 +401,7 @@ function TransferToAgentForm({ params, onChange, currentAgentId }) {
             ))}
             <button
                 onClick={addTransfer}
-                className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-gray-300 py-2.5 text-sm text-gray-500 hover:border-gray-400 hover:text-gray-700"
+                className="flex w-full items-center justify-center gap-1.5 rounded-md border border-dashed border-gray-300 py-2.5 text-sm text-gray-500 hover:border-gray-400 hover:text-gray-700"
             >
                 <Plus className="h-4 w-4" /> Add transfer
             </button>
@@ -459,7 +459,7 @@ function TransferToNumberForm({ params, onChange }) {
             ))}
             <button
                 onClick={addTransfer}
-                className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-gray-300 py-2.5 text-sm text-gray-500 hover:border-gray-400 hover:text-gray-700"
+                className="flex w-full items-center justify-center gap-1.5 rounded-md border border-dashed border-gray-300 py-2.5 text-sm text-gray-500 hover:border-gray-400 hover:text-gray-700"
             >
                 <Plus className="h-4 w-4" /> Add transfer
             </button>
@@ -505,14 +505,14 @@ function SettingsDrawer({ tool, toolConfig, onClose, onSave, onCancel, currentAg
                 <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
                     <div>
                         <div className="flex items-center gap-2">
-                            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gray-100">
+                            <div className="flex h-7 w-7 items-center justify-center rounded-md bg-gray-100">
                                 <Wrench className="h-3.5 w-3.5 text-gray-600" />
                             </div>
                             <h3 className="text-sm font-semibold text-gray-900">{tool.label}</h3>
                         </div>
                         <p className="mt-0.5 pl-9 text-xs text-gray-500">System tool configuration</p>
                     </div>
-                    <button onClick={handleCancel} className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600">
+                    <button onClick={handleCancel} className="rounded-md p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600">
                         <X className="h-4 w-4" />
                     </button>
                 </div>
@@ -542,13 +542,13 @@ function SettingsDrawer({ tool, toolConfig, onClose, onSave, onCancel, currentAg
                 )}
 
                 <div className="flex gap-2 justify-end border-t border-gray-100 px-5 py-4">
-                    <button onClick={handleCancel} className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50">
+                    <button onClick={handleCancel} className="rounded-md border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50">
                         Cancel
                     </button>
                     <button
                         disabled={isInvalid}
                         onClick={() => { onSave(tool.id, config, params); onClose(); }}
-                        className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-40"
+                        className="rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-40"
                     >
                         Save changes
                     </button>
@@ -716,7 +716,7 @@ function ParamRow({ param, onChange, onDelete }) {
                     onChange={e => onChange({ ...param, description: e.target.value })}
                     rows={2}
                     placeholder="Describe this parameter for the LLM…"
-                    className="w-full resize-none rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-900 placeholder:text-gray-400 focus:border-gray-400 focus:bg-white focus:outline-none focus:ring-1 focus:ring-gray-300"
+                    className="w-full resize-none rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-900 placeholder:text-gray-400 focus:border-gray-400 focus:bg-white focus:outline-none focus:ring-1 focus:ring-gray-300"
                 />
                 <p className="mt-1 text-xs text-gray-400">This field will be passed to the LLM and should describe in detail how to extract the data from the transcript.</p>
             </Field>
@@ -728,9 +728,9 @@ function ParamRow({ param, onChange, onDelete }) {
                         onChange={e => onChange({ ...param, enum_input: e.target.value })}
                         onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addEnum())}
                         placeholder="Enter an enum value"
-                        className="flex-1 rounded-lg border border-gray-200 bg-gray-50 px-3 py-1.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-400 focus:bg-white focus:outline-none focus:ring-1 focus:ring-gray-300"
+                        className="flex-1 rounded-md border border-gray-200 bg-gray-50 px-3 py-1.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-400 focus:bg-white focus:outline-none focus:ring-1 focus:ring-gray-300"
                     />
-                    <button onClick={addEnum} className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50">
+                    <button onClick={addEnum} className="flex h-8 w-8 items-center justify-center rounded-md border border-gray-200 bg-white text-gray-600 hover:bg-gray-50">
                         <Plus className="h-3.5 w-3.5" />
                     </button>
                 </div>
@@ -747,7 +747,7 @@ function ParamRow({ param, onChange, onDelete }) {
                 <p className="mt-1 text-xs text-gray-400">Add predefined values that the LLM can select from.</p>
             </Field>
             <div className="flex justify-end">
-                <button onClick={onDelete} className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs text-gray-600 hover:border-red-200 hover:bg-red-50 hover:text-red-600">
+                <button onClick={onDelete} className="rounded-md border border-gray-200 px-3 py-1.5 text-xs text-gray-600 hover:border-red-200 hover:bg-red-50 hover:text-red-600">
                     Delete
                 </button>
             </div>
@@ -783,7 +783,7 @@ function HeaderRow({ header, onChange, onDelete, secrets, onOpenSecretDrawer }) 
                 </Field>
             )}
             <div className="flex justify-end">
-                <button onClick={onDelete} className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs text-gray-600 hover:border-red-200 hover:bg-red-50 hover:text-red-600">
+                <button onClick={onDelete} className="rounded-md border border-gray-200 px-3 py-1.5 text-xs text-gray-600 hover:border-red-200 hover:bg-red-50 hover:text-red-600">
                     Delete
                 </button>
             </div>
@@ -947,7 +947,7 @@ function SectionBlock({ title, hint, actionLabel, onAdd, children }) {
                     <p className="text-sm font-semibold text-gray-900">{title}</p>
                     {hint && <p className="mt-0.5 text-xs text-gray-400">{hint}</p>}
                 </div>
-                <button onClick={onAdd} className="shrink-0 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50">
+                <button onClick={onAdd} className="shrink-0 rounded-md border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50">
                     {actionLabel}
                 </button>
             </div>
@@ -1066,7 +1066,7 @@ function AddToolDrawer({ onClose, onSave, onUpdate, mode = 'add', editToolId = n
                                 : 'Configure a webhook tool for this agent'}
                         </p>
                     </div>
-                    <button onClick={onClose} className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600">
+                    <button onClick={onClose} className="rounded-md p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600">
                         <X className="h-4 w-4" />
                     </button>
                 </div>
@@ -1082,7 +1082,7 @@ function AddToolDrawer({ onClose, onSave, onUpdate, mode = 'add', editToolId = n
                             onChange={e => setTool(t => ({ ...t, description: e.target.value }))}
                             rows={3}
                             placeholder="Describe what this tool does…"
-                            className="w-full resize-none rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-400 focus:bg-white focus:outline-none focus:ring-1 focus:ring-gray-300"
+                            className="w-full resize-none rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-400 focus:bg-white focus:outline-none focus:ring-1 focus:ring-gray-300"
                         />
                     </Field>
                     <div className="grid grid-cols-[140px,1fr] gap-3">
@@ -1099,7 +1099,7 @@ function AddToolDrawer({ onClose, onSave, onUpdate, mode = 'add', editToolId = n
                             <span className="w-8 text-right text-sm font-medium text-gray-700">{tool.response_timeout_secs}</span>
                         </div>
                     </Field>
-                    <div className="space-y-3 rounded-lg border border-gray-200 bg-gray-50 p-3">
+                    <div className="space-y-3 rounded-md border border-gray-200 bg-gray-50 p-3">
                         <label className="flex cursor-pointer items-center gap-3">
                             <input type="checkbox" checked={tool.disable_interruptions} onChange={e => setTool(t => ({ ...t, disable_interruptions: e.target.checked }))} className="h-4 w-4 rounded border-gray-300 accent-gray-900" />
                             <div>
@@ -1162,7 +1162,7 @@ function AddToolDrawer({ onClose, onSave, onUpdate, mode = 'add', editToolId = n
                                     onChange={e => setBodyMeta({ description: e.target.value })}
                                     rows={2}
                                     placeholder="Describe the body for the LLM…"
-                                    className="w-full resize-none rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-300"
+                                    className="w-full resize-none rounded-md border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-300"
                                 />
                                 <p className="mt-1 text-xs text-gray-400">This field will be passed to the LLM and should describe in detail how to extract the data from the transcript.</p>
                             </Field>
@@ -1192,14 +1192,14 @@ function AddToolDrawer({ onClose, onSave, onUpdate, mode = 'add', editToolId = n
                     <button
                         onClick={onClose}
                         disabled={saving}
-                        className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-50"
+                        className="rounded-md border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-50"
                     >
                         Cancel
                     </button>
                     <button
                         disabled={isDisabled}
                         onClick={handleSave}
-                        className="flex items-center gap-2 rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-40 transition-all"
+                        className="flex items-center gap-2 rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-40 transition-all"
                     >
                         {saving && <Spinner size={13} />}
                         {saving
@@ -1365,7 +1365,7 @@ export default function AgentToolsSection({ config, agentId }) {
                 <div>
                     <div className="mb-4 flex items-center justify-between">
                         <h2 className="text-xl font-bold text-gray-900">Agent Tools</h2>
-                        <button onClick={() => setShowAddTool(true)} className="rounded-lg bg-gray-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-gray-800">
+                        <button onClick={() => setShowAddTool(true)} className="rounded-md bg-gray-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-gray-800">
                             Add tool
                         </button>
                     </div>
@@ -1394,7 +1394,7 @@ export default function AgentToolsSection({ config, agentId }) {
                                     >
                                         {/* Left: icon + text */}
                                         <div className="flex items-center gap-2.5 min-w-0">
-                                            <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg transition-colors ${isLoading ? 'bg-gray-100' : 'bg-gray-100 group-hover:bg-gray-200'}`}>
+                                            <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md transition-colors ${isLoading ? 'bg-gray-100' : 'bg-gray-100 group-hover:bg-gray-200'}`}>
                                                 {isLoading
                                                     ? <Spinner size={14} />
                                                     : <Wrench className="h-3.5 w-3.5 text-gray-500" />
@@ -1428,7 +1428,7 @@ export default function AgentToolsSection({ config, agentId }) {
                                                         return updated;
                                                     });
                                                 }}
-                                                className="rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors"
+                                                className="rounded-md p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors"
                                                 title="Detach tool"
                                             >
                                                 <X className="h-3.5 w-3.5" />
@@ -1445,7 +1445,7 @@ export default function AgentToolsSection({ config, agentId }) {
                             </div>
                             <p className="text-sm font-semibold text-gray-900">No tools found</p>
                             <p className="mt-1 text-xs text-gray-500">This agent has no attached tools yet.</p>
-                            <button onClick={() => setShowAddTool(true)} className="mt-4 rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800">
+                            <button onClick={() => setShowAddTool(true)} className="mt-4 rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800">
                                 Add tool
                             </button>
                         </div>

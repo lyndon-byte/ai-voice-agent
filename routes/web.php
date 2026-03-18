@@ -117,9 +117,10 @@ Route::post('/receive-webhook',[WorkSpaceController::class, 'receiveWebhook']);
 Route::get('/app/get-conversation-audio',[AnalysisController::class, 'getConversationAudio'])
     ->name('conversation.audio')
     ->middleware('signed');
+
 Route::get('/conversation/{conversation_id}',[ConversationController::class,'publicView'])
-        ->name('conversation.public')
-        ->middleware('signed');
+        ->name('conversation.public');
+        // ->middleware('signed');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

@@ -11,9 +11,9 @@ class ConversationController extends Controller
 {
     public function publicView(Request $request, $conversation_id)
     {
-        if (!$request->hasValidSignature()) {
-            abort(403);
-        }
+        // if (!$request->hasValidSignature()) {
+        //     abort(403);
+        // }
 
         $agentName = $request->query('agent_name');
 

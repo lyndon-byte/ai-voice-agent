@@ -42,6 +42,7 @@ function fmtAxisDate(iso) {
 // ─── MiniCalendar ─────────────────────────────────────────────────────────────
 
 function MiniCalendar({ month, year, rangeStart, rangeEnd, hoveredDate, onSelect, onHover }) {
+
     const firstDay    = new Date(year, month, 1).getDay();
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     const cells = [];
@@ -128,7 +129,7 @@ function DateRangePicker({ startDate, endDate, onApply, onClose }) {
 
     return (
         <div ref={ref}
-            className="absolute top-full right-0 mt-1 z-50 bg-white rounded-xl shadow-2xl border border-gray-200 flex overflow-hidden"
+            className="absolute top-full right-0 mt-1 z-50 bg-white rounded-md shadow-2xl border border-gray-200 flex overflow-hidden"
             style={{ minWidth: 560 }}>
             {/* Presets */}
             <div className="bg-gray-50 border-r border-gray-100 p-3 flex flex-col gap-0.5 w-36">
@@ -153,7 +154,7 @@ function DateRangePicker({ startDate, endDate, onApply, onClose }) {
                         <div key={lbl} className="flex-1">
                             <p className="text-xs text-gray-400 font-medium mb-1">{lbl}</p>
                             <div className={[
-                                "border rounded-lg px-3 py-1.5 text-xs",
+                                "border rounded-md px-3 py-1.5 text-xs",
                                 val ? "border-blue-400 text-gray-800 bg-blue-50" : "border-gray-200 text-gray-300 bg-white",
                             ].join(" ")}>
                                 {val ? val.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "—"}
@@ -173,13 +174,13 @@ function DateRangePicker({ startDate, endDate, onApply, onClose }) {
                     <span className="text-xs text-gray-400">{activePreset || "Custom range"}</span>
                     <div className="flex gap-2">
                         <button onClick={() => { setTempStart(null); setTempEnd(null); setActivePreset(null); }}
-                            className="px-3 py-1.5 text-xs border border-gray-200 rounded-lg text-gray-500 hover:bg-gray-50 cursor-pointer transition-colors">
+                            className="px-3 py-1.5 text-xs border border-gray-200 rounded-md text-gray-500 hover:bg-gray-50 cursor-pointer transition-colors">
                             Clear
                         </button>
                         <button
                             onClick={() => tempStart && tempEnd && onApply(toDateStr(tempStart), toDateStr(tempEnd))}
                             disabled={!tempStart || !tempEnd}
-                            className="px-4 py-1.5 text-xs bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors">
+                            className="px-4 py-1.5 text-xs bg-blue-600 text-white rounded-md font-medium hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors">
                             Apply
                         </button>
                     </div>
@@ -280,7 +281,7 @@ export default function Dashboard({ stats, chartData, startDate: initStart, endD
                 {/* ── Workspace greeting + date picker row ── */}
                 <div className="flex items-start justify-between mb-5">
                     <div>
-                        <p className="text-xs text-gray-400 font-medium mb-0.5">My Workspace</p>
+                        <p className="text-gray-400 font-medium mb-0.5">My Workspace</p>
                         <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
                             {(() => {
                                 const h = new Date().getHours();
@@ -294,7 +295,7 @@ export default function Dashboard({ stats, chartData, startDate: initStart, endD
                         <button
                             onClick={() => setShowPicker(v => !v)}
                             className={[
-                                "flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition-colors cursor-pointer",
+                                "flex items-center gap-2 px-4 py-2 rounded-md border text-sm font-medium transition-colors cursor-pointer",
                                 showPicker
                                     ? "border-blue-400 bg-blue-50 text-blue-700"
                                     : "border-gray-200 bg-white text-gray-700 hover:border-gray-300",

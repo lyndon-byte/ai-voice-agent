@@ -54,7 +54,7 @@ function FieldError({ message }) {
 
 function inputCls(hasError) {
     return [
-        'w-full rounded-lg border bg-white py-2.5 text-sm text-gray-900',
+        'w-full rounded-md border bg-white py-2.5 text-sm text-gray-900',
         'placeholder:text-gray-400 focus:outline-none focus:ring-2 transition',
         hasError
             ? 'border-red-400 focus:border-red-400 focus:ring-red-100'
@@ -163,7 +163,7 @@ function DocumentDrawer({ item, onClose }) {
                         {showingChild && (
                             <button
                                 onClick={goBackToFolder}
-                                className="mt-0.5 flex-shrink-0 rounded-lg p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition"
+                                className="mt-0.5 flex-shrink-0 rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition"
                             >
                                 <ChevronLeft className="h-4 w-4" />
                             </button>
@@ -178,7 +178,7 @@ function DocumentDrawer({ item, onClose }) {
                     </div>
                     <button
                         onClick={onClose}
-                        className="ml-3 flex-shrink-0 rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition"
+                        className="ml-3 flex-shrink-0 rounded-md p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition"
                     >
                         <X className="h-4 w-4" />
                     </button>
@@ -197,7 +197,7 @@ function DocumentDrawer({ item, onClose }) {
 
                     {/* Error */}
                     {!loading && error && (
-                        <div className="m-5 flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3">
+                        <div className="m-5 flex items-start gap-2 rounded-md border border-red-200 bg-red-50 px-4 py-3">
                             <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-red-500" />
                             <p className="text-sm text-red-600">{error}</p>
                         </div>
@@ -222,7 +222,7 @@ function DocumentDrawer({ item, onClose }) {
                                             onClick={() => openChildDoc(doc)}
                                             className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition hover:bg-gray-50"
                                         >
-                                            <div className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg ${iconColors(doc.type ?? 'file')}`}>
+                                            <div className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md ${iconColors(doc.type ?? 'file')}`}>
                                                 <KbTypeIcon type={doc.type ?? 'file'} />
                                             </div>
                                             <div className="min-w-0 flex-1">
@@ -438,7 +438,7 @@ function AddDocumentModal({ agentId, onClose, onJobStarted }) {
                     <div className="flex items-center gap-2">
                         {view !== 'menu' && (
                             <button onClick={handleBack} disabled={loading}
-                                className="mr-1 rounded-lg p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition disabled:opacity-40">
+                                className="mr-1 rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition disabled:opacity-40">
                                 <ChevronLeft className="h-4 w-4" />
                             </button>
                         )}
@@ -452,14 +452,14 @@ function AddDocumentModal({ agentId, onClose, onJobStarted }) {
                         </div>
                     </div>
                     <button onClick={handleClose} disabled={loading}
-                        className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition disabled:opacity-40">
+                        className="rounded-md p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition disabled:opacity-40">
                         <X className="h-4 w-4" />
                     </button>
                 </div>
 
                 <div className="px-5 py-4">
                     {apiError && (
-                        <div className="mb-4 flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2.5">
+                        <div className="mb-4 flex items-start gap-2 rounded-md border border-red-200 bg-red-50 px-3 py-2.5">
                             <AlertCircle className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-red-500" />
                             <span className="text-xs text-red-600">{apiError}</span>
                         </div>
@@ -487,7 +487,7 @@ function AddDocumentModal({ agentId, onClose, onJobStarted }) {
                     {/* URL */}
                     {view === 'url' && (
                         <div className="space-y-4">
-                            <div className="flex rounded-lg border border-gray-200 bg-gray-50 p-0.5">
+                            <div className="flex rounded-md border border-gray-200 bg-gray-50 p-0.5">
                                 {[{ val: 'single', label: 'Single page' }, { val: 'website', label: 'Whole website' }].map(({ val, label }) => (
                                     <button key={val} onClick={() => { setUrlMode(val); setUrlErrors({}); }} disabled={loading}
                                         className={`flex-1 rounded-md py-1.5 text-xs font-medium transition
@@ -562,7 +562,7 @@ function AddDocumentModal({ agentId, onClose, onJobStarted }) {
                             {files.length > 0 && (
                                 <div className="max-h-36 space-y-1.5 overflow-y-auto">
                                     {files.map((f, i) => (
-                                        <div key={i} className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2">
+                                        <div key={i} className="flex items-center gap-2 rounded-md border border-gray-200 bg-white px-3 py-2">
                                             <File className="h-3.5 w-3.5 flex-shrink-0 text-violet-500" />
                                             <span className="flex-1 truncate text-xs text-gray-700">{f.name}</span>
                                             {!loading && (
@@ -612,11 +612,11 @@ function AddDocumentModal({ agentId, onClose, onJobStarted }) {
                 {view !== 'menu' && (
                     <div className="flex gap-2 border-t border-gray-100 px-5 py-4">
                         <button onClick={handleClose} disabled={loading}
-                            className="flex-1 rounded-lg border border-gray-200 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50 transition disabled:opacity-40">
+                            className="flex-1 rounded-md border border-gray-200 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50 transition disabled:opacity-40">
                             Cancel
                         </button>
                         <button onClick={submitHandlers[view]} disabled={loading}
-                            className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-gray-900 py-2.5 text-sm font-medium text-white hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50 transition">
+                            className="flex flex-1 items-center justify-center gap-2 rounded-md bg-gray-900 py-2.5 text-sm font-medium text-white hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50 transition">
                             {loading && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                             {loading ? submitLabels[view]?.busy : submitLabels[view]?.idle}
                         </button>
@@ -631,7 +631,7 @@ function AddDocumentModal({ agentId, onClose, onJobStarted }) {
 function ProcessingBanner({ jobId, mode = 'add' }) {
     const label = mode === 'detach' ? 'Detaching document…' : 'Processing document…';
     return (
-        <div className="mb-3 flex items-center gap-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3">
+        <div className="mb-3 flex items-center gap-3 rounded-md border border-blue-200 bg-blue-50 px-4 py-3">
             <RefreshCw className="h-4 w-4 flex-shrink-0 animate-spin text-blue-500" />
             <div className="min-w-0 flex-1">
                 <p className="text-xs font-semibold text-blue-800">{label}</p>
@@ -681,7 +681,7 @@ function DetachConfirmModal({ item, agentId, onClose, onJobStarted }) {
                 </div>
 
                 {error && (
-                    <div className="mx-5 mb-3 flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2.5">
+                    <div className="mx-5 mb-3 flex items-start gap-2 rounded-md border border-red-200 bg-red-50 px-3 py-2.5">
                         <AlertCircle className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-red-500" />
                         <span className="text-xs text-red-600">{error}</span>
                     </div>
@@ -691,14 +691,14 @@ function DetachConfirmModal({ item, agentId, onClose, onJobStarted }) {
                     <button
                         onClick={onClose}
                         disabled={loading}
-                        className="flex-1 rounded-lg border border-gray-200 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50 transition disabled:opacity-40"
+                        className="flex-1 rounded-md border border-gray-200 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50 transition disabled:opacity-40"
                     >
                         Cancel
                     </button>
                     <button
                         onClick={handleDetach}
                         disabled={loading}
-                        className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-red-500 py-2.5 text-sm font-medium text-white hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-50 transition"
+                        className="flex flex-1 items-center justify-center gap-2 rounded-md bg-red-500 py-2.5 text-sm font-medium text-white hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-50 transition"
                     >
                         {loading && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                         {loading ? 'Detaching…' : 'Detach'}
@@ -795,11 +795,11 @@ export default function KnowledgeBaseSection({ config, agentId, localKb }) {
                 <h2 className="text-xl font-bold text-gray-900">Agent Knowledge Base</h2>
                 <div className="flex items-center gap-2">
                     <button onClick={() => setShowModal(true)}
-                        className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
+                        className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
                         Browse library
                     </button>
                     <button onClick={() => setShowAddModal(true)}
-                        className="flex items-center gap-1.5 rounded-lg bg-gray-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-gray-800 transition">
+                        className="flex items-center gap-1.5 rounded-md bg-gray-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-gray-800 transition">
                         <Plus className="h-3.5 w-3.5" />
                         Add document
                     </button>
@@ -814,7 +814,7 @@ export default function KnowledgeBaseSection({ config, agentId, localKb }) {
                 <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                 <input type="text" placeholder="Search Knowledge Base..."
                     value={search} onChange={e => setSearch(e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 bg-white py-2.5 pl-9 pr-9 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-300 transition"
+                    className="w-full rounded-md border border-gray-300 bg-white py-2.5 pl-9 pr-9 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-300 transition"
                 />
                 {search && (
                     <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2">
@@ -830,10 +830,10 @@ export default function KnowledgeBaseSection({ config, agentId, localKb }) {
                         <div
                             key={i}
                             onClick={() => setDrawerItem(item)}
-                            className="group flex cursor-pointer items-center justify-between gap-3 rounded-lg border border-gray-200 bg-white p-3 transition hover:border-gray-300 hover:shadow-sm"
+                            className="group flex cursor-pointer items-center justify-between gap-3 rounded-md border border-gray-200 bg-white p-3 transition hover:border-gray-300 hover:shadow-sm"
                         >
                             <div className="flex min-w-0 items-center gap-3">
-                                <div className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg ${iconColors(item.type)}`}>
+                                <div className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md ${iconColors(item.type)}`}>
                                     <KbTypeIcon type={item.type} />
                                 </div>
                                 <div className="min-w-0">
@@ -851,7 +851,7 @@ export default function KnowledgeBaseSection({ config, agentId, localKb }) {
                             {/* Detach button */}
                             <button
                                 onClick={e => { e.stopPropagation(); setDetachItem(item); }}
-                                className="flex-shrink-0 rounded-lg p-1.5 text-red-400 transition hover:bg-red-50 hover:text-red-600"
+                                className="flex-shrink-0 rounded-md p-1.5 text-red-400 transition hover:bg-red-50 hover:text-red-600"
                                 title="Detach"
                             >
                                 <X className="h-3.5 w-3.5" />
@@ -867,10 +867,10 @@ export default function KnowledgeBaseSection({ config, agentId, localKb }) {
                     <p className="text-sm font-semibold text-gray-900">No documents found</p>
                     <p className="mt-1 text-xs text-gray-500">This agent has no attached documents yet.</p>
                     <div className="mt-4 flex gap-2">
-                        <button onClick={() => setShowModal(true)} className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                        <button onClick={() => setShowModal(true)} className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
                             Browse library
                         </button>
-                        <button onClick={() => setShowAddModal(true)} className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800">
+                        <button onClick={() => setShowAddModal(true)} className="rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800">
                             Add document
                         </button>
                     </div>
@@ -915,7 +915,7 @@ export default function KnowledgeBaseSection({ config, agentId, localKb }) {
                                 <p className="mt-0.5 text-xs text-gray-400">Select documents to attach to this agent</p>
                             </div>
                             <button onClick={() => { setShowModal(false); setKbSearch(''); }}
-                                className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition">
+                                className="rounded-md p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition">
                                 <X className="h-4 w-4" />
                             </button>
                         </div>
@@ -925,7 +925,7 @@ export default function KnowledgeBaseSection({ config, agentId, localKb }) {
                                 <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
                                 <input autoFocus type="text" placeholder="Search library..."
                                     value={kbSearch} onChange={e => setKbSearch(e.target.value)}
-                                    className="w-full rounded-lg border border-gray-200 bg-white py-2.5 pl-9 pr-9 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-100 transition"
+                                    className="w-full rounded-md border border-gray-200 bg-white py-2.5 pl-9 pr-9 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-100 transition"
                                 />
                                 {kbSearch && (
                                     <button onClick={() => setKbSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2">
@@ -942,7 +942,7 @@ export default function KnowledgeBaseSection({ config, agentId, localKb }) {
                                     <div className="space-y-0.5">
                                         {kbList.map((item, i) => (
                                             <div key={i} className="flex items-center gap-3 rounded-xl px-2 py-2 opacity-60">
-                                                <div className={`flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg ${iconColors(item.type)}`}>
+                                                <div className={`flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md ${iconColors(item.type)}`}>
                                                     <KbTypeIcon type={item.type} className="h-3.5 w-3.5" />
                                                 </div>
                                                 <div className="min-w-0 flex-1">
@@ -976,7 +976,7 @@ export default function KnowledgeBaseSection({ config, agentId, localKb }) {
                                                             isSelected ? "bg-gray-50" : "hover:bg-gray-50",
                                                         ].join(' ')}
                                                     >
-                                                        <div className={`flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg ${iconColors(kbItem.type)}`}>
+                                                        <div className={`flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md ${iconColors(kbItem.type)}`}>
                                                             <KbTypeIcon type={kbItem.type} className="h-3.5 w-3.5" />
                                                         </div>
                                                         <div className="min-w-0 flex-1">
@@ -1017,7 +1017,7 @@ export default function KnowledgeBaseSection({ config, agentId, localKb }) {
                                 setShowModal(false); 
                                 setKbSearch(''); 
                             }}
-                              className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800 transition"
+                              className="rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800 transition"
                             >
                                 Done
                             </button>

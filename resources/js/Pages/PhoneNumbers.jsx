@@ -98,7 +98,7 @@ function Select({ value, onChange, options, className = "" }) {
       <select
         value={value}
         onChange={e => onChange(e.target.value)}
-        className="w-full appearance-none border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent pr-8"
+        className="w-full appearance-none border border-gray-200 rounded-md px-3 py-2 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent pr-8"
       >
         {options.map(o => <option key={o} value={o}>{o}</option>)}
       </select>
@@ -114,7 +114,7 @@ function Input({ placeholder, value, onChange, className = "" }) {
       placeholder={placeholder}
       value={value}
       onChange={e => onChange(e.target.value)}
-      className={`w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 placeholder-gray-400 focus:outline-none ${className}`}
+      className={`w-full border border-gray-200 rounded-md px-3 py-2 text-sm text-gray-800 placeholder-gray-400 focus:outline-none ${className}`}
     />
   );
 }
@@ -140,9 +140,9 @@ function Drawer({ open, onClose, title, icon, children, wide = false, footer }) 
       <div className={`fixed top-0 right-0 h-full ${wide ? "w-[520px]" : "w-[460px]"} bg-white shadow-2xl z-50 flex flex-col transition-transform duration-300 ${open ? "translate-x-0" : "translate-x-full"}`}>
         {/* Header */}
         <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-100 shrink-0">
-          <span className="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-lg text-gray-600">{icon}</span>
+          <span className="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-md text-gray-600">{icon}</span>
           <h2 className="font-semibold text-gray-900 text-base">{title}</h2>
-          <button onClick={onClose} className="ml-auto w-7 h-7 flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"><XIcon/></button>
+          <button onClick={onClose} className="ml-auto w-7 h-7 flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-md transition-colors"><XIcon/></button>
         </div>
         {/* Scrollable body */}
         <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">{children}</div>
@@ -165,12 +165,6 @@ function ImportSelectModal({ open, onClose, onSelect }) {
       title: "Import from Twilio",
       desc: "Connect a number from your Twilio account using Account SID credentials.",
     },
-    // {
-    //   id: "sip",
-    //   icon: <SipIcon/>,
-    //   title: "Import SIP Trunk",
-    //   desc: "Forward calls from your SIP provider to ElevenLabs via inbound/outbound configuration.",
-    // },
     {
       id: "system",
       icon: <PhoneIcon size={18}/>,
@@ -187,7 +181,7 @@ function ImportSelectModal({ open, onClose, onSelect }) {
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
             <div className="flex items-center justify-between mb-5">
               <h2 className="font-semibold text-gray-900 text-lg">Add phone number</h2>
-              <button onClick={onClose} className="w-7 h-7 flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"><XIcon/></button>
+              <button onClick={onClose} className="w-7 h-7 flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-gray-50 rounded-md transition-colors"><XIcon/></button>
             </div>
             <p className="text-sm text-gray-500 mb-5">Choose how you'd like to add a phone number to your account.</p>
             <div className="space-y-3">
@@ -195,9 +189,9 @@ function ImportSelectModal({ open, onClose, onSelect }) {
                 <button
                   key={o.id}
                   onClick={() => { onClose(); onSelect(o.id); }}
-                  className="w-full flex items-start gap-4 p-4 border border-gray-200 rounded-xl hover:border-gray-900 hover:bg-gray-50 transition-all group text-left"
+                  className="w-full flex items-start gap-4 p-4 border border-gray-200 rounded-md hover:border-gray-300 hover:bg-gray-50 transition-all group text-left"
                 >
-                  <span className="w-9 h-9 flex items-center justify-center bg-gray-100 rounded-lg group-hover:bg-gray-200 text-gray-600 shrink-0 mt-0.5">{o.icon}</span>
+                  <span className="w-9 h-9 flex items-center justify-center bg-gray-100 rounded-md group-hover:bg-gray-200 text-gray-600 shrink-0 mt-0.5">{o.icon}</span>
                   <div>
                     <div className="text-sm font-medium text-gray-900">{o.title}</div>
                     <div className="text-xs text-gray-500 mt-0.5 leading-relaxed">{o.desc}</div>
@@ -249,14 +243,14 @@ function TwilioDrawer({ open, onClose }) {
   const footer = (
     <div className="space-y-3">
       {error && (
-        <div className="text-xs text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
+        <div className="text-xs text-red-600 bg-red-50 border border-red-100 rounded-md px-3 py-2">
           {error}
         </div>
       )}
       <button
         onClick={handleImport}
         disabled={!canSubmit || loading}
-        className={`w-full flex items-center justify-center gap-2 text-sm font-medium py-2.5 rounded-lg transition-colors ${
+        className={`w-full flex items-center justify-center gap-2 text-sm font-medium py-2.5 rounded-md transition-colors ${
           canSubmit && !loading
             ? "bg-gray-900 text-white hover:bg-gray-700"
             : "bg-gray-200 text-gray-400 cursor-not-allowed"
@@ -282,7 +276,7 @@ function TwilioDrawer({ open, onClose }) {
         <div>
           <Label>Phone number</Label>
           <div className="flex gap-2">
-            <div className="flex items-center gap-1.5 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 bg-white shrink-0">
+            <div className="flex items-center gap-1.5 border border-gray-200 rounded-md px-3 py-2 text-sm text-gray-700 bg-white shrink-0">
               <span className="text-base">🇺🇸</span>
               <span>+1</span>
               <ChevronDown/>
@@ -301,7 +295,7 @@ function TwilioDrawer({ open, onClose }) {
             placeholder="••••••••••••••••••••••••••••••••"
             value={token}
             onChange={e => setToken(e.target.value)}
-            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 placeholder-gray-400 focus:outline-none "
+            className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm text-gray-800 placeholder-gray-400 focus:outline-none "
           />
         </div>
       </div>
@@ -344,7 +338,7 @@ function SipDrawer({ open, onClose }) {
         </SectionCard>
 
         {infoVisible && (
-          <div className="flex items-start gap-3 bg-gray-50 border border-gray-200 rounded-xl p-4 text-sm text-gray-600">
+          <div className="flex items-start gap-3 bg-gray-50 border border-gray-200 rounded-md p-4 text-sm text-gray-600">
             <InfoIcon size={15} className="shrink-0 mt-0.5 text-gray-500"/>
             <div className="flex-1 leading-relaxed">
               <span className="font-medium text-gray-800">Static IP SIP Servers Available</span>
@@ -372,7 +366,7 @@ function SipDrawer({ open, onClose }) {
                   <button onClick={() => removeItem(allowedNumbers, setAllowedNumbers, i)} className="p-2 text-gray-400 hover:text-red-500 transition-colors"><TrashIcon/></button>
                 </div>
               ))}
-              <button onClick={() => addItem(allowedNumbers, setAllowedNumbers)} className="flex items-center gap-1.5 text-sm text-gray-700 border border-gray-200 rounded-lg px-3 py-1.5 hover:bg-gray-50 transition-colors">
+              <button onClick={() => addItem(allowedNumbers, setAllowedNumbers)} className="flex items-center gap-1.5 text-sm text-gray-700 border border-gray-200 rounded-md px-3 py-1.5 hover:bg-gray-50 transition-colors">
                 <PlusIcon size={13}/> Add Number
               </button>
             </div>
@@ -385,7 +379,7 @@ function SipDrawer({ open, onClose }) {
                   <button onClick={() => removeItem(allowedIPs, setAllowedIPs, i)} className="p-2 text-gray-400 hover:text-red-500 transition-colors"><TrashIcon/></button>
                 </div>
               ))}
-              <button onClick={() => addItem(allowedIPs, setAllowedIPs)} className="flex items-center gap-1.5 text-sm text-gray-700 border border-gray-200 rounded-lg px-3 py-1.5 hover:bg-gray-50 transition-colors">
+              <button onClick={() => addItem(allowedIPs, setAllowedIPs)} className="flex items-center gap-1.5 text-sm text-gray-700 border border-gray-200 rounded-md px-3 py-1.5 hover:bg-gray-50 transition-colors">
                 <PlusIcon size={13}/> Add IP Address
               </button>
             </div>
@@ -401,7 +395,7 @@ function SipDrawer({ open, onClose }) {
                   <button onClick={() => removeItem(domains, setDomains, i)} className="p-2 text-gray-400 hover:text-red-500 transition-colors"><TrashIcon/></button>
                 </div>
               ))}
-              <button onClick={() => addItem(domains, setDomains)} className="flex items-center gap-1.5 text-sm text-gray-700 border border-gray-200 rounded-lg px-3 py-1.5 hover:bg-gray-50 transition-colors">
+              <button onClick={() => addItem(domains, setDomains)} className="flex items-center gap-1.5 text-sm text-gray-700 border border-gray-200 rounded-md px-3 py-1.5 hover:bg-gray-50 transition-colors">
                 <PlusIcon size={13}/> Add Domain
               </button>
             </div>
@@ -416,7 +410,7 @@ function SipDrawer({ open, onClose }) {
                 <div>
                   <Label>SIP Trunk Password</Label>
                   <input type="password" placeholder="Password for SIP digest authentication" value={sipPass} onChange={e => setSipPass(e.target.value)}
-                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"/>
+                    className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"/>
                 </div>
               </div>
             </div>
@@ -434,7 +428,7 @@ function SipDrawer({ open, onClose }) {
           </SectionCard>
         </div>
 
-        <button className="w-full bg-gray-900 text-white text-sm font-medium py-2.5 rounded-lg hover:bg-gray-700 transition-colors mt-2">Import</button>
+        <button className="w-full bg-gray-900 text-white text-sm font-medium py-2.5 rounded-md hover:bg-gray-700 transition-colors mt-2">Import</button>
       </div>
     </Drawer>
   );
@@ -528,17 +522,17 @@ function SystemNumbersModal({ open, onClose }) {
       {open && <Overlay onClick={handleClose}/>}
       {open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg flex flex-col max-h-[85vh]">
+          <div className="bg-white rounded-md shadow-2xl w-full max-w-lg flex flex-col max-h-[85vh]">
 
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
               <div className="flex items-center gap-3">
-                <span className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center text-gray-600">
+                <span className="w-8 h-8 bg-gray-100 rounded-md flex items-center justify-center text-gray-600">
                   <PhoneIcon size={16}/>
                 </span>
                 <h2 className="font-semibold text-gray-900">Choose System Number</h2>
               </div>
-              <button onClick={handleClose} className="w-7 h-7 flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+              <button onClick={handleClose} className="w-7 h-7 flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-md transition-colors">
                 <XIcon/>
               </button>
             </div>
@@ -579,7 +573,7 @@ function SystemNumbersModal({ open, onClose }) {
                   placeholder="e.g. 415"
                   value={areaCode}
                   onChange={e => setAreaCode(e.target.value.replace(/\D/g, ""))}
-                  className="w-full border border-gray-200 rounded-lg pl-20 pr-3 py-2 text-sm text-gray-800 placeholder-gray-400 focus:outline-none"
+                  className="w-full border border-gray-200 rounded-md pl-20 pr-3 py-2 text-sm text-gray-800 placeholder-gray-400 focus:outline-none"
                 />
               </div>
             </div>
@@ -607,7 +601,7 @@ function SystemNumbersModal({ open, onClose }) {
                 <button
                   key={n.phone_number ?? idx}
                   onClick={() => setSelected(prev => prev?.phone_number === n.phone_number ? null : n)}
-                  className={`w-full flex items-center justify-between p-3.5 rounded-xl border transition-all text-left ${
+                  className={`w-full flex items-center justify-between p-3.5 rounded-md border transition-all text-left ${
                     selected?.phone_number === n.phone_number
                       ? "border-gray-900 bg-gray-50 ring-1 ring-gray-900"
                       : "border-gray-200 hover:border-gray-400"
@@ -644,13 +638,13 @@ function SystemNumbersModal({ open, onClose }) {
 
             {/* Footer */}
             <div className="px-6 py-4 border-t border-gray-100 flex gap-3">
-              <button onClick={handleClose} className="flex-1 border border-gray-200 text-sm text-gray-700 font-medium py-2.5 rounded-lg hover:bg-gray-50 transition-colors">
+              <button onClick={handleClose} className="flex-1 border border-gray-200 text-sm text-gray-700 font-medium py-2.5 rounded-md hover:bg-gray-50 transition-colors">
                 Cancel
               </button>
               <button
                 disabled={!selected || !label || buttonLoading}
                 onClick={() => handleImport(selected)}
-                className={`flex-1 text-sm font-medium py-2.5 rounded-lg transition-colors flex items-center justify-center gap-2 ${
+                className={`flex-1 text-sm font-medium py-2.5 rounded-md transition-colors flex items-center justify-center gap-2 ${
                   selected && label && !buttonLoading
                     ? "bg-gray-900 text-white hover:bg-gray-700"
                     : "bg-gray-200 text-gray-400 cursor-not-allowed"
@@ -814,7 +808,7 @@ function NumberDetailDrawer({ open, onClose, item }) {
                 type="text"
                 value={label}
                 onChange={e => handleLabelChange(e.target.value)}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2  text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
+                className="w-full border border-gray-200 rounded-md px-3 py-2  text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
                 placeholder="e.g. Support line"
               />
             </div>
@@ -840,12 +834,12 @@ function NumberDetailDrawer({ open, onClose, item }) {
             
             {/* Loading skeleton */}
             {agentsLoading ? (
-              <div className="w-full h-9 bg-gray-100 rounded-lg animate-pulse flex items-center px-3 gap-2">
+              <div className="w-full h-9 bg-gray-100 rounded-md animate-pulse flex items-center px-3 gap-2">
                 <div className="h-2.5 bg-gray-300 rounded w-2/3"/>
                 <div className="ml-auto h-3 w-3 bg-gray-300 rounded"/>
               </div>
             ) : agentsError ? (
-              <div className="flex items-center justify-between gap-2 border border-red-100 bg-red-50 rounded-lg px-3 py-2">
+              <div className="flex items-center justify-between gap-2 border border-red-100 bg-red-50 rounded-md px-3 py-2">
                 <p className="text-xs text-red-500">{agentsError}</p>
                 <button onClick={retryLoadAgents} className="text-xs text-red-500 underline hover:text-red-700 shrink-0">Retry</button>
               </div>
@@ -855,7 +849,7 @@ function NumberDetailDrawer({ open, onClose, item }) {
                   defaultValue={currentAgentId}
                   onChange={handleAgentChange}
                   disabled={agentSaving}
-                  className="w-full appearance-none border border-gray-200 rounded-lg pl-3 pr-8 py-2 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent disabled:opacity-60 cursor-pointer"
+                  className="w-full appearance-none border border-gray-200 rounded-md pl-3 pr-8 py-2 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent disabled:opacity-60 cursor-pointer"
                 >
                   <option value="">No agent</option>
                   {agents.map(a => (
@@ -893,7 +887,7 @@ function NumberRow({ item, onClick }) {
       className="w-full flex items-center gap-4 px-5 py-4 border border-gray-100 rounded-xl bg-white hover:border-gray-300 hover:shadow-sm transition-all text-left group"
     >
       {/* Icon */}
-      <span className="w-9 h-9 flex items-center justify-center bg-gray-100 rounded-lg text-gray-500 group-hover:bg-gray-200 transition-colors shrink-0">
+      <span className="w-9 h-9 flex items-center justify-center bg-gray-100 rounded-md text-gray-500 group-hover:bg-gray-200 transition-colors shrink-0">
         <PhoneIcon size={16}/>
       </span>
 
@@ -959,7 +953,7 @@ export default function PhoneNumbers({ numbers }) {
                         <h1 className="text-2xl font-semibold text-gray-900">Phone Numbers</h1>
                         <button
                             onClick={() => setSelectOpen(true)}
-                            className="flex items-center gap-2 bg-gray-900 text-white text-sm font-medium px-4 py-2.5 rounded-xl hover:bg-gray-700 transition-colors"
+                            className="flex items-center gap-2 bg-gray-900 text-white text-sm font-medium px-4 py-2.5 rounded-md hover:bg-gray-700 transition-colors"
                         >
                             <PlusIcon/> Import number
                         </button>
@@ -967,15 +961,15 @@ export default function PhoneNumbers({ numbers }) {
 
                      {/* Empty state */}
                       {isEmpty ? (
-                        <div className="flex flex-col items-center justify-center border border-gray-100 rounded-2xl bg-gray-50 py-16 px-6 text-center">
-                          <span className="w-12 h-12 flex items-center justify-center border border-gray-200 rounded-xl bg-white text-gray-400 mb-4 shadow-sm">
+                        <div className="flex flex-col items-center justify-center border border-gray-100 rounded-md bg-gray-50 py-16 px-6 text-center">
+                          <span className="w-12 h-12 flex items-center justify-center border border-gray-200 rounded-md bg-white text-gray-400 mb-4 shadow-sm">
                             <PhoneIcon size={22}/>
                           </span>
                           <div className="text-sm font-semibold text-gray-900 mb-1">No phone numbers</div>
                           <div className="text-sm text-gray-500 mb-5">You don't have any phone numbers yet.</div>
                           <button
                             onClick={() => setSelectOpen(true)}
-                            className="flex items-center gap-2 text-sm text-gray-700 border border-gray-200 bg-white px-4 py-2 rounded-lg hover:border-gray-400 hover:bg-gray-50 transition-colors"
+                            className="flex items-center gap-2 text-sm text-gray-700 border border-gray-200 bg-white px-4 py-2 rounded-md hover:border-gray-400 hover:bg-gray-50 transition-colors"
                           >
                             <PlusIcon size={13}/> Import number
                           </button>
