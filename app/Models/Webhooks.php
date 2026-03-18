@@ -10,6 +10,7 @@ class Webhooks extends Model
         
         'organization_id',
         'webhook_id',
+        'agent_id',
         'name',
         'webhook_url',
         'auth_hmac'        

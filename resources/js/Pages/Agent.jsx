@@ -107,7 +107,7 @@ export default function Agent({ agent,currentVoice,localKb,currentTab }) {
                             )}
                             
                             {activeTab === 'advanced' && (
-                                <AdvancedTab  />
+                                <AdvancedTab agentId={agent.agent_id}  />
                             )}
                         </div>
                 </div>

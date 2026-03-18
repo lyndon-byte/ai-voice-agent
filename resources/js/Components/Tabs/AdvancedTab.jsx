@@ -126,7 +126,7 @@ function SecretModal({ secret, onClose }) {
   }
 
 // ── Main component ───────────────────────────────────────────────────────────
-export default function AdvancedTab() {
+export default function AdvancedTab({agentId}) {
     
   // ── state: current webhook detail ──
   const [currentWebhook, setCurrentWebhook] = useState(null);
@@ -158,7 +158,9 @@ export default function AdvancedTab() {
     
     try {
 
-        const res = await axios.post("/app/delete-webhook");
+        const res = await axios.post("/app/delete-webhook",{
+           gent_id: agentId
+        });
         const { success } = res.data ?? {};
 
         if(success){
@@ -191,6 +193,7 @@ export default function AdvancedTab() {
         const res = await axios.post("/app/create-webhook", {
           name: createName.trim(),
           webhook_url: createUrl.trim(),
+          agent_id: agentId
         });
         const { webhook_id, secret } = res.data ?? {};
         const webhookData = res.data?.webhook ?? null;

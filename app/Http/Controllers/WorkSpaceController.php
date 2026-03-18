@@ -35,7 +35,8 @@ class WorkSpaceController extends Controller
 
         $validated = $request->validate([
             'name' => 'required|string',
-            'webhook_url' => 'required|url'
+            'webhook_url' => 'required|url',
+            'agent_id' => 'required|string'
         ]);
 
         $secret = 'whsec_' . Str::random(40);
@@ -47,6 +48,7 @@ class WorkSpaceController extends Controller
         $webhook = $org->webhook()->create([
 
             'webhook_id' => $webhookId,
+            'agent_id' => $validated["agent_id"],
             'name' => $validated["name"],
             'webhook_url' => $validated["webhook_url"],
             'auth_hmac' => $secret
@@ -130,7 +132,8 @@ class WorkSpaceController extends Controller
 
         ]);
 
-        $webhook = $org->webhook;
+        $webhook = $org->webhook()->where('agent_id',$data['agent_id'])->first();
+    
         $receivers = $org->postCallNotificationReceivers()->pluck('email');
 
         if ($webhook) {
