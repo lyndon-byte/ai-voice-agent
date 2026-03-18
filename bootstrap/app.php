@@ -29,6 +29,7 @@ return Application::configure(basePath: dirname(__DIR__))
             // '/app/knowledge-base',
             '/receive-webhook'
         ]);
+        $middleware->trustProxies(at: '*');
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //
