@@ -113,17 +113,18 @@ function VariableTextarea({ defaultValue, rows, onChange, placeholder, className
         const newValue = e.target.value;
         setValue(newValue);
         onChange?.(e);
-
+    
         const cursor = e.target.selectionStart;
         const trigger = findTrigger(newValue, cursor);
-
+    
         if (trigger) {
-            // Calculate dropdown position relative to wrapper
             const textarea = textareaRef.current;
             const caret = getCaretCoordinates(textarea, trigger.triggerIndex);
             const lineHeight = parseInt(window.getComputedStyle(textarea).lineHeight) || 20;
             setDropdown({
-                top: caret.top + lineHeight + parseInt(window.getComputedStyle(textarea).paddingTop),
+                top: caret.top + lineHeight
+                    + parseInt(window.getComputedStyle(textarea).paddingTop)
+                    - textarea.scrollTop,   // ← subtract scroll offset
                 left: caret.left + parseInt(window.getComputedStyle(textarea).paddingLeft),
                 triggerIndex: trigger.triggerIndex,
                 query: trigger.query,
