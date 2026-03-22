@@ -22,12 +22,13 @@ export default function UnsavedChangesBar({ agentId, onSaveSuccess, onClearChang
         }
     };
 
-    const handleClear = () => {
+    const handleClear = async () => {
 
-        clearChanges();
+        await clearChanges();
         onClearChanges()
         
     };
+
 
     return (
         <>
