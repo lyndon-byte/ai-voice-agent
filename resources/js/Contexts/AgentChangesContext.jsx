@@ -9,7 +9,7 @@ export function AgentChangesProvider({ children, initialAgent }) {
     const [changes, setChanges] = useState({});
     const [hasChanges, setHasChanges] = useState(false);
     const [saving, setSaving] = useState(false);
-
+    const [isClearingChanges,setIsClearingChanges] = useState(false)
     // Track a change
     const trackChange = useCallback((path, value) => {
         setChanges(prev => {
@@ -139,7 +139,9 @@ export function AgentChangesProvider({ children, initialAgent }) {
 
     // Clear all changes
     const clearChanges = useCallback(async () => {
+        setIsClearingChanges(true)
         await axios.post('/app/agent-changes/delete-session');
+        setIsClearingChanges(false)
         setChanges({});
         setHasChanges(false);
     }, []);
@@ -282,7 +284,8 @@ export function AgentChangesProvider({ children, initialAgent }) {
         replaceArray,
         clearChanges,
         saveChanges,
-        mapToAPIFormat
+        mapToAPIFormat,
+        isClearingChanges
     };
 
     useEffect(() => {

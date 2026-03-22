@@ -5,10 +5,10 @@ import ViewChangesModal from './Modals/Viewchangesmodal';
 
 export default function UnsavedChangesBar({ agentId, onSaveSuccess, onClearChanges }) {
     
-    const { hasChanges, saving, clearChanges, saveChanges, changes } = useAgentChanges();
+    const { hasChanges, saving, clearChanges, saveChanges, changes, isClearingChanges } = useAgentChanges();
     const [showViewChanges, setShowViewChanges] = useState(false);
 
-    if (!hasChanges) return null;
+    if (!hasChanges && !isClearingChanges) return null;
 
     const handleSave = async () => {
         const result = await saveChanges(agentId);
@@ -23,11 +23,10 @@ export default function UnsavedChangesBar({ agentId, onSaveSuccess, onClearChang
     };
 
     const handleClear = () => {
-        if (confirm('Are you sure you want to discard all unsaved changes?')) {
 
-            clearChanges();
-            onClearChanges()
-        }
+        clearChanges();
+        onClearChanges()
+        
     };
 
     return (
@@ -44,10 +43,10 @@ export default function UnsavedChangesBar({ agentId, onSaveSuccess, onClearChang
                     <div className="flex items-center gap-2">
                         <button
                             onClick={handleClear}
-                            disabled={saving}
+                            disabled={saving || isClearingChanges}
                             className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50"
                         >
-                            Clear
+                            {isClearingChanges ? 'Clearing...' : 'Clear'}
                         </button>
                         
                         <button
