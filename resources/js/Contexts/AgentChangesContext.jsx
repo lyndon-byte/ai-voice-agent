@@ -139,7 +139,7 @@ export function AgentChangesProvider({ children, initialAgent }) {
 
     // Clear all changes
     const clearChanges = useCallback(async () => {
-        await axios.delete('/app/agent-changes/session');
+        await axios.post('/app/agent-changes/delete-session');
         setChanges({});
         setHasChanges(false);
     }, []);

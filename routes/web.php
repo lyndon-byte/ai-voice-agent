@@ -65,7 +65,7 @@ Route::middleware(['auth','verified','org','role:owner'])->group(function () {
 
     Route::get('/app/agent-changes/session', [AgentChangesController::class, 'get']);
     Route::post('/app/agent-changes/session', [AgentChangesController::class, 'store']);
-    Route::delete('/app/agent-changes/session', [AgentChangesController::class, 'clear']);
+    Route::post('/app/agent-changes/delete-session', [AgentChangesController::class, 'clear']);
 
 
     Route::get('/app/voices', [VoiceController::class, 'getVoices'])->name('voices');
@@ -121,6 +121,14 @@ Route::get('/app/get-conversation-audio',[AnalysisController::class, 'getConvers
 Route::get('/conversation/{conversation_id}',[ConversationController::class,'publicView'])
         ->name('conversation.public');
         // ->middleware('signed');
+
+Route::get('/test',function(){
+
+    return Inertia::render('Test');
+
+});
+   
+
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
