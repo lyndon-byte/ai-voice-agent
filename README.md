@@ -1,51 +1,66 @@
-🚀 Try It Live
-You can try the platform live: https://talkingtoeleven.com/
+# 🚀 AI Voice Agent Platform
 
-👉 Simply register using a valid email address to access the dashboard and explore the features.
+An AI-powered voice assistant automation platform that uses the ElevenLabs API to enable users to create realistic AI voice agents.
 
-# System Overview
+**🔗 Try It Live:** [talkingtoeleven.com](https://talkingtoeleven.com/)
+> Simply register using a valid email address to access the dashboard and explore the features.
 
-This is an AI-powered voice assistant automation platform that uses the ElevenLabs API to enable users to create realistic AI voice agents.
+---
 
-# Built with:
+## Built With
 
-* Backend: Laravel
-* Frontend: React (Vite) + Inertia.js
-* Database: MySQL / PostgreSQL
-* Queue System: Laravel Scheduler (for background jobs)
-* AI or voice agent api: ElevenLabs 
+- **Backend:** Laravel
+- **Frontend:** React (Vite) + Inertia.js
+- **Database:** MySQL / PostgreSQL
+- **Queue System:** Laravel Scheduler (for background jobs)
+- **AI / Voice Agent API:** ElevenLabs
 
-# Requirements
+---
 
-Required
-PHP >= 8.1
-Composer
-Node.js >= 18
-npm or yarn
-MySQL or PostgreSQL
+## Requirements
 
-# Setup Instructions (Local Development)
-1. Clone the Repository
+- PHP >= 8.1
+- Composer
+- Node.js >= 18
+- npm or yarn
+- MySQL or PostgreSQL
 
+---
+
+## Setup Instructions (Local Development)
+
+### 1. Clone the Repository
+
+```bash
 git clone https://github.com/lyndon-byte/ai-voice-agent.git
 cd ai-voice-agent
+```
 
-2. Install PHP Dependencies
+### 2. Install PHP Dependencies
 
+```bash
 composer install
+```
 
-3. Install Frontend Dependencies
+### 3. Install Frontend Dependencies
 
+```bash
 npm install
+```
 
-4. Setup Environment File
+### 4. Setup Environment File
+
 Copy the example environment file:
 
+```bash
 cp .env.example .env
+```
 
-5. Configure Environment Variables
-Update .env with your local setup:
+### 5. Configure Environment Variables
 
+Update `.env` with your local setup:
+
+```env
 APP_NAME="Talking to eleven"
 APP_ENV=local
 APP_KEY=
@@ -67,9 +82,9 @@ LOG_STACK=single
 LOG_DEPRECATIONS_CHANNEL=null
 LOG_LEVEL=debug
 
-DB_CONNECTION=pgsql // or mysql
+DB_CONNECTION=pgsql       # or mysql
 DB_HOST=127.0.0.1
-DB_PORT=5432  // or 3306 if mysql
+DB_PORT=5432              # or 3306 if mysql
 DB_DATABASE=your_database
 DB_USERNAME=your_username
 DB_PASSWORD=your_password
@@ -102,78 +117,108 @@ AWS_USE_PATH_STYLE_ENDPOINT=false
 
 VITE_APP_NAME="${APP_NAME}"
 VITE_LANDING_PAGE_AGENT_ID=agent_4501kkrqdkatfbava1w2x980ph8j
+```
 
-6. Generate Application Key:
+### 6. Generate Application Key
 
-7. Run Database Migrations:
+```bash
+php artisan key:generate
+```
 
+### 7. Run Database Migrations
+
+```bash
 php artisan migrate \
---path=database/migrations/landlord \
---path=database/migrations
+  --path=database/migrations/landlord \
+  --path=database/migrations
 
 php artisan db:seed --class=RoleSeeder
+```
 
-8. Start Development Servers:
+### 8. Start Development Servers
+
 Run Laravel:
+
+```bash
 php artisan serve
+```
+
 Run Vite (frontend):
+
+```bash
 npm run dev
+```
 
-9. Run Queue Worker
+### 9. Run Queue Worker
+
+```bash
 php artisan queue:work
+```
 
-🌐 Access the App
-Open your browser:
+---
 
+## 🌐 Access the App
+
+Open your browser and navigate to:
+
+```
 http://localhost:8000
+```
 
-🔐 Authentication
-Register using a valid email
+---
 
-🛠️ Additional Notes
-Make sure your database is running before migration
-Queue workers are required for background jobs (emails, automation, etc.)
+## 🔐 Authentication
 
-📦 Additional Requirements
+Register using a valid email to get started.
+
+---
+
+## 📦 Additional Services
 
 The following services are required for full functionality:
-Install ngrok to expose your local server for webhooks.
 
-run on command terminal:
-ngrok.exe http 8000
+### 🤖 ElevenLabs Account
 
-Use this webhook endpoint in your eleven lab post-call webhook:
+You need an account from [ElevenLabs](https://elevenlabs.io) to:
+
+- Generate an API key
+- Configure AI voice agents
+- Set a webhook authentication secret (generated inside the ElevenLabs agent settings)
+
+### 📞 Twilio Account
+
+You need an account from [Twilio](https://www.twilio.com) for:
+
+- Voice call handling
+- Phone number provisioning
+- Authentication (SID and Auth Token)
+
+### 📧 Mailer Service
+
+Use a mail provider such as [Mailgun](https://www.mailgun.com) or [Mailtrap](https://mailtrap.io).
+
+### 🌍 ngrok
+
+Install [ngrok](https://ngrok.com) to expose your local server for webhooks:
+
+```bash
+ngrok http 8000
+```
+
+Use the generated URL as your webhook endpoint in ElevenLabs:
+
+```
 https://xxxx.ngrok.io/receive-webhook
+```
 
-🤖 ElevenLabs Account
+---
 
-You need an account from ElevenLabs to:
+## ⚙️ Additional Environment Variables
 
-Generate API key
-Configure AI voice agents
-Set webhook authentication secret
+Add these to your `.env` file:
 
-The webhook secret can be generated inside the ElevenLabs agent settings (used for post-call webhook verification).
-
-📞 Twilio Account
-
-You need an account from Twilio for:
-
-Voice call handling
-Phone number provisioning
-Authentication (SID and Auth Token)
-
-📧 Mailer Service
-
-Use a mail provider such as:
-
-Mailgun
-Mailtrap
-
-⚙️ Environment Variables
-
-Update your .env file with the following:
-
+```env
+# Mail
 MAIL_MAILER=smtp
 MAIL_HOST=your-mail-host
 MAIL_PORT=465
@@ -183,15 +228,31 @@ MAIL_ENCRYPTION=null
 MAIL_FROM_ADDRESS=your-email@example.com
 MAIL_FROM_NAME="${APP_NAME}"
 
+# ElevenLabs
 ELEVEN_LABS_KEY=your-elevenlabs-api-key
 ELEVEN_LABS_WEBHOOK_AUTH_SECRET_KEY=your-webhook-secret-key
 
+# Twilio
 TWILIO_SID=your-twilio-sid
 TWILIO_AUTH_TOKEN=your-twilio-auth-token
+```
 
-📁 Project Structure (Simplified)
-app/            # Laravel backend logic
-resources/js/   # React frontend (Inertia)
-routes/         # Web routes
-database/       # Migrations and seeders
-public/         # Public assets
+---
+
+## 📁 Project Structure
+
+```
+ai-voice-agent/
+├── app/            # Laravel backend logic
+├── resources/js/   # React frontend (Inertia)
+├── routes/         # Web routes
+├── database/       # Migrations and seeders
+└── public/         # Public assets
+```
+
+---
+
+## 🛠️ Notes
+
+- Make sure your database is running before migration.
+- Queue workers are required for background jobs (emails, automation, etc.).
