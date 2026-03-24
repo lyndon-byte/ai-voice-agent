@@ -5,10 +5,10 @@ import TextInput from '@/Components/TextInput';
 import GuestLayout from '@/Layouts/GuestLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
 
-export default function Register({email}) {
+export default function Register() {
     const { data, setData, post, processing, errors, reset } = useForm({
         name: '',
-        email: email,
+        email: '',
         organization_name:'',
         password: '',
         password_confirmation: '',
@@ -52,8 +52,8 @@ export default function Register({email}) {
                         type="email"
                         name="email"
                         value={data.email}
-                        className="mt-1 block w-full bg-gray-200"
-                        disabled={true}
+                        className="mt-1 block w-full "
+                        onChange={(e) => setData('email', e.target.value)}
                         required
                     />
 

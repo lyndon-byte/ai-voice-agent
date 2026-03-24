@@ -192,7 +192,7 @@ export default function AuthenticatedLayout({ header, tabs, activeTab, onTabChan
                             </ul>
                         </li>
 
-                        <li>
+                        {/* <li>
                             <Link 
                                 href={route('outbound')}
                                 className={`flex items-center rounded-lg p-2 text-gray-900 transition-colors
@@ -204,7 +204,7 @@ export default function AuthenticatedLayout({ header, tabs, activeTab, onTabChan
                                 <Send className="h-5 w-5 text-gray-500" />
                                 <span className="ms-3 flex items-center">Outbound</span>
                             </Link>
-                        </li>
+                        </li> */}
 
                         <li>
                             <Link 

@@ -257,6 +257,22 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                     opacity: 0; animation: fadeUp 0.5s ease 0.12s both;
                 }
 
+                .hero-dev-credit {
+                    font-size: 1.25rem; font-weight: 500;
+                    color: var(--muted);
+                    margin-top: -0.75rem; margin-bottom: 1.25rem;
+                    opacity: 0; animation: fadeUp 0.5s ease 0.18s both;
+                }
+
+                .hero-dev-email {
+                    color: var(--black);
+                    font-weight: 700;
+                    letter-spacing: 0.01em;
+                    transition: opacity 0.15s;
+                }
+
+                .hero-dev-email:hover { opacity: 0.65; }
+
                 .live-dot {
                     width: 7px; height: 7px; border-radius: 50%;
                     background: var(--black); flex-shrink: 0;
@@ -697,14 +713,14 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                 <div className="nav-links">
                     <a href="#features"  className="nav-link">Features</a>
                     <a href="#how"       className="nav-link">How it works</a>
-                    <a href="#pricing"   className="nav-link">Pricing</a>
+                    {/* <a href="#pricing"   className="nav-link">Pricing</a> */}
                     <a href="#faq"       className="nav-link">FAQ</a>
                     {auth.user ? (
                         <Link href={route('dashboard')} className="nav-btn">Dashboard</Link>
                     ) : (
                         <>
                             <Link href={route('login')}    className="nav-link">Log in</Link>
-                            <a href={bookingUrl} className="nav-btn">Get a Quote</a>
+                            <Link href={route('register')} className="nav-btn">Register</Link>
                         </>
                     )}
                 </div>
@@ -719,6 +735,12 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                         <div className="hero-label">
                             <span className="live-dot" />
                             Powered by ElevenLabs API · Agents
+                        </div>
+                        <div className="hero-dev-credit">
+                            Developed by{' '}
+                            <a href="mailto:cuarterolyndon06@gmail.com" className="hero-dev-email">
+                                cuarterolyndon06@gmail.com
+                            </a>
                         </div>
                         <h1 className="hero-title">
                             Voice that thinks.<br />
@@ -737,7 +759,7 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                                 <Link href={route('dashboard')} className="btn-primary">Go to Dashboard →</Link>
                             ) : (
                                 <>
-                                    <a href={bookingUrl}  className="btn-primary">Schedule a Consultation →</a>
+                                    {/* <a href={bookingUrl}  className="btn-primary">Schedule a Consultation →</a> */}
                                     <a href="#how" className="btn-outline">See how it works</a>
                                 </>
                             )}
@@ -926,7 +948,7 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
             </section>
 
             {/* ── PRICING ── */}
-            <section className="pricing-section" id="pricing">
+            {/* <section className="pricing-section" id="pricing">
                 <p className="section-label">Pricing</p>
                 <div className="section-head-row">
                     <h2 className="section-title">Simple, transparent pricing.</h2>
@@ -1000,7 +1022,7 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                             </div>
                         ))}
                     </div>
-            </section>
+            </section> */}
 
             {/* ── FAQ ── */}
             <section className="section" id="faq">
@@ -1035,7 +1057,7 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                         <Link href={route('dashboard')} className="btn-primary">Go to Dashboard →</Link>
                     ) : (
                         <>
-                            <a href={bookingUrl} className="btn-primary">Schedule a Consultation →</a>
+                            {/* <a href={bookingUrl} className="btn-primary">Schedule a Consultation →</a> */}
                             <Link href={route('login')}    className="btn-outline">Log in</Link>
                         </>
                     )}
@@ -1049,7 +1071,7 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                 </a>
                 <div className="footer-links">
                     <a href="#features"  className="footer-link">Features</a>
-                    <a href="#pricing"   className="footer-link">Pricing</a>
+                    {/* <a href="#pricing"   className="footer-link">Pricing</a> */}
                     <a href="#faq"       className="footer-link">FAQ</a>
                 </div>
                 <p className="footer-meta">© 2025 TalkingToEleven</p>
