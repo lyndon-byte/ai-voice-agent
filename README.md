@@ -128,11 +128,12 @@ php artisan key:generate
 ### 7. Run Database Migrations
 
 ```bash
-php artisan migrate \
-  --path=database/migrations/landlord \
-  --path=database/migrations
 
+php artisan migrate --path=database/migrations/landlord 
+
+php artisan migrate --path=database/migrations
 php artisan db:seed --class=RoleSeeder
+
 ```
 
 ### 8. Start Development Servers
