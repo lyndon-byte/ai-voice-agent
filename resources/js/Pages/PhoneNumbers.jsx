@@ -1,9 +1,11 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { useState, useEffect, useRef } from "react";
 import { Head } from '@inertiajs/react';
+import axios from "axios";
 
 
 const ENCRYPTION_OPTIONS = ["Allowed", "Required", "Disabled"];
+const TRANSPORT_OPTIONS   = ["Auto", "UDP", "TCP", "TLS"];
 
 const SOURCE_BADGE = {
   system:   { label: "System",   cls: "bg-purple-50 text-purple-600" },
@@ -171,6 +173,13 @@ function ImportSelectModal({ open, onClose, onSelect }) {
       title: "Choose System Number",
       desc: "Pick a ready-to-use number from our built-in pool — no external account needed.",
     },
+    {
+      id: "sip",
+      icon: <SipIcon/>,
+      title: "Import SIP Trunk",
+      desc: "Forward calls from your SIP provider to ElevenLabs via inbound/outbound configuration.",
+    },
+    
   ];
 
   return (
@@ -306,20 +315,82 @@ function TwilioDrawer({ open, onClose }) {
 // ── SIP Trunk Drawer ───────────────────────────────────────────────────────────
 
 function SipDrawer({ open, onClose }) {
+
+  // Basic
   const [label, setLabel] = useState("");
   const [phone, setPhone] = useState("");
-  const [encryption, setEncryption] = useState("Allowed");
-  const [allowedNumbers, setAllowedNumbers] = useState([]);
-  const [allowedIPs, setAllowedIPs] = useState(["0.0.0.0/0"]);
-  const [domains, setDomains] = useState([]);
-  const [sipUser, setSipUser] = useState("");
-  const [sipPass, setSipPass] = useState("");
-  const [outboundAddr, setOutboundAddr] = useState("");
-  const [infoVisible, setInfoVisible] = useState(true);
 
-  const addItem = (list, setList) => setList([...list, ""]);
-  const removeItem = (list, setList, i) => setList(list.filter((_, idx) => idx !== i));
-  const updateItem = (list, setList, i, val) => setList(list.map((x, idx) => idx === i ? val : x));
+  // Inbound
+  const [inboundEncryption, setInboundEncryption] = useState("Allowed");
+  const [allowedNumbers, setAllowedNumbers]       = useState([]);
+  const [allowedIPs, setAllowedIPs]               = useState(["0.0.0.0/0"]);
+  const [domains, setDomains]                     = useState([]);
+  const [inboundUser, setInboundUser]             = useState("");
+  const [inboundPass, setInboundPass]             = useState("");
+
+  // Outbound
+  const [outboundAddr, setOutboundAddr]           = useState("");
+  const [outboundTransport, setOutboundTransport] = useState("Auto");
+  const [outboundEncryption, setOutboundEncryption] = useState("Allowed");
+  const [outboundUser, setOutboundUser]           = useState("");
+  const [outboundPass, setOutboundPass]           = useState("");
+  const [outboundHeaders, setOutboundHeaders]     = useState([]); // [{ key, value }]
+
+  // UI
+  const [infoVisible, setInfoVisible] = useState(true);
+  const [loading, setLoading]         = useState(false);
+  const [error, setError]             = useState("");
+
+  const addItem    = (list, setList)          => setList([...list, ""]);
+  const removeItem = (list, setList, i)       => setList(list.filter((_, idx) => idx !== i));
+  const updateItem = (list, setList, i, val)  => setList(list.map((x, idx) => idx === i ? val : x));
+
+  const addHeader    = ()         => setOutboundHeaders(h => [...h, { key: "", value: "" }]);
+  const removeHeader = (i)        => setOutboundHeaders(h => h.filter((_, idx) => idx !== i));
+  const updateHeader = (i, field, val) =>
+    setOutboundHeaders(h => h.map((x, idx) => idx === i ? { ...x, [field]: val } : x));
+
+  const handleImport = async () => {
+    setError("");
+    setLoading(true);
+    try {
+      const headersObj = outboundHeaders.reduce((acc, { key, value }) => {
+        if (key.trim()) acc[key.trim()] = value;
+        return acc;
+      }, {});
+
+      await axios.post("/app/import-phone-number-by-sip", {
+        label:        label.trim(),
+        phone_number: phone.trim(),
+        inbound: {
+          allowed_addresses: allowedIPs.filter(Boolean),
+          allowed_numbers:   allowedNumbers.filter(Boolean),
+          media_encryption:  inboundEncryption.toLowerCase(),
+          credentials: {
+            username: inboundUser || undefined,
+            password: inboundPass || undefined,
+          },
+          remote_domains: domains.filter(Boolean),
+        },
+        outbound: {
+          address:          outboundAddr.trim() || undefined,
+          transport:        outboundTransport.toLowerCase(),
+          media_encryption: outboundEncryption.toLowerCase(),
+          headers:          Object.keys(headersObj).length ? headersObj : undefined,
+          credentials: {
+            username: outboundUser || undefined,
+            password: outboundPass || undefined,
+          },
+        },
+      });
+
+      onClose();
+    } catch (err) {
+      setError(err?.response?.data?.message ?? "Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <Drawer open={open} onClose={onClose} title="Import SIP Trunk" icon={<SipIcon/>} wide>
@@ -355,7 +426,7 @@ function SipDrawer({ open, onClose }) {
           <SectionCard className="space-y-4">
             <div>
               <Label>Media Encryption</Label>
-              <Select value={encryption} onChange={setEncryption} options={ENCRYPTION_OPTIONS}/>
+              <Select value={inboundEncryption} onChange={setInboundEncryption} options={ENCRYPTION_OPTIONS}/>
             </div>
             <div>
               <Label>Allowed Numbers <span className="text-gray-400 font-normal">(Optional)</span></Label>
@@ -405,12 +476,12 @@ function SipDrawer({ open, onClose }) {
               <div className="space-y-3">
                 <div>
                   <Label>SIP Trunk Username</Label>
-                  <Input placeholder="Username for SIP digest authentication" value={sipUser} onChange={setSipUser}/>
+                  <Input placeholder="Username for SIP digest authentication" value={inboundUser} onChange={setInboundUser}/>
                 </div>
                 <div>
                   <Label>SIP Trunk Password</Label>
-                  <input type="password" placeholder="Password for SIP digest authentication" value={sipPass} onChange={e => setSipPass(e.target.value)}
-                    className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"/>
+                  <input type="password" placeholder="Password for SIP digest authentication" value={inboundPass} onChange={e => setInboundPass(e.target.value)}
+                    className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:border-transparent"/>
                 </div>
               </div>
             </div>
@@ -421,14 +492,61 @@ function SipDrawer({ open, onClose }) {
         <div>
           <div className="text-sm font-semibold text-gray-900 mb-1">Outbound Configuration</div>
           <p className="text-xs text-gray-500 mb-3">Configure where ElevenLabs should send calls for your phone number</p>
-          <SectionCard>
-            <Label>Address</Label>
-            <Input placeholder="example.pstn.twilio.com" value={outboundAddr} onChange={setOutboundAddr}/>
-            <p className="text-xs text-gray-500 mt-1.5 leading-relaxed">Hostname or IP the SIP INVITE is sent to. Not a SIP URI — don't include the sip: protocol. For TLS, use the hostname with a valid certificate.</p>
+          <SectionCard className="space-y-4">
+            <div>
+              <Label>Address</Label>
+              <Input placeholder="example.pstn.twilio.com" value={outboundAddr} onChange={setOutboundAddr}/>
+              <p className="text-xs text-gray-500 mt-1.5 leading-relaxed">Hostname or IP the SIP INVITE is sent to. Not a SIP URI — don't include the sip: protocol. For TLS, use the hostname with a valid certificate.</p>
+            </div>
+            <div>
+              <Label>Transport</Label>
+              <Select value={outboundTransport} onChange={setOutboundTransport} options={TRANSPORT_OPTIONS}/>
+            </div>
+            <div>
+              <Label>Media Encryption</Label>
+              <Select value={outboundEncryption} onChange={setOutboundEncryption} options={ENCRYPTION_OPTIONS}/>
+            </div>
+            <div>
+              <Label>Authentication <span className="text-gray-400 font-normal">(Optional)</span></Label>
+              <p className="text-xs text-gray-500 mb-3">Credentials used when authenticating outbound calls.</p>
+              <div className="space-y-3">
+                <div>
+                  <Label>Username</Label>
+                  <Input placeholder="Outbound SIP username" value={outboundUser} onChange={setOutboundUser}/>
+                </div>
+                <div>
+                  <Label>Password</Label>
+                  <input type="password" placeholder="Outbound SIP password" value={outboundPass} onChange={e => setOutboundPass(e.target.value)}
+                    className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"/>
+                </div>
+              </div>
+            </div>
+            <div>
+              <Label>Custom Headers <span className="text-gray-400 font-normal">(Optional)</span></Label>
+              <p className="text-xs text-gray-500 mb-2">Extra SIP headers to include in outbound INVITE requests.</p>
+              {outboundHeaders.map((h, i) => (
+                <div key={i} className="flex gap-2 mb-2">
+                  <Input placeholder="Header name" value={h.key} onChange={v => updateHeader(i, "key", v)} className="flex-1"/>
+                  <Input placeholder="Value" value={h.value} onChange={v => updateHeader(i, "value", v)} className="flex-1"/>
+                  <button onClick={() => removeHeader(i)} className="p-2 text-gray-400 hover:text-red-500 transition-colors"><TrashIcon/></button>
+                </div>
+              ))}
+              <button onClick={addHeader} className="flex items-center gap-1.5 text-sm text-gray-700 border border-gray-200 rounded-md px-3 py-1.5 hover:bg-gray-50 transition-colors">
+                <PlusIcon size={13}/> Add Header
+              </button>
+            </div>
           </SectionCard>
         </div>
 
-        <button className="w-full bg-gray-900 text-white text-sm font-medium py-2.5 rounded-md hover:bg-gray-700 transition-colors mt-2">Import</button>
+        {error && <p className="text-sm text-red-600">{error}</p>}
+
+        <button
+          onClick={handleImport}
+          disabled={loading}
+          className="w-full bg-gray-900 text-white text-sm font-medium py-2.5 rounded-md hover:bg-gray-700 transition-colors mt-2 disabled:opacity-50"
+        >
+          {loading ? "Importing..." : "Import"}
+        </button>
       </div>
     </Drawer>
   );

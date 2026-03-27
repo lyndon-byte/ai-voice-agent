@@ -344,7 +344,7 @@ class PhoneNumbersController extends Controller
 
             DB::rollBack();
 
-            Log::error('SIP phone import internal error', [
+            Log::error(' SIP phone import internal error', [
                 'error' => $e->getMessage()
             ]);
 

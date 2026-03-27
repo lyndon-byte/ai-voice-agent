@@ -102,6 +102,7 @@ Route::middleware(['auth','verified','org','role:owner'])->group(function () {
     Route::get('/app/available-numbers',[PhoneNumbersController::class, 'getAvailableNumbers'])->name('available.numbers');
     Route::get('/app/buy-system-number',[PhoneNumbersController::class, 'buySystemPhoneNumber']);
     Route::post('/app/import-twilio-phone-number',[PhoneNumbersController::class, 'importTwilioPhoneNumber']);
+    Route::post('/app/import-phone-number-by-sip',[PhoneNumbersController::class, 'importPhoneNumberBySIP']);
     Route::post('/app/update-phone-number',[PhoneNumbersController::class, 'update']);
 
     Route::get('/app/outbound',function() {
