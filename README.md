@@ -2,9 +2,6 @@
 
 An AI-powered voice assistant automation platform that uses the ElevenLabs API to enable users to create realistic AI voice agents.
 
-**🔗 Try It Live:** [talkingtoeleven.com](https://talkingtoeleven.com/)
-> Simply register using a valid email address to access the dashboard and explore the features.
-
 ---
 
 ## Built With
